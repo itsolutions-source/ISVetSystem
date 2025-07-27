@@ -1,0 +1,24 @@
+  <h2 mat-dialog-title>Retirar Medicação</h2>
+
+  <mat-dialog-content>
+    <p class="medication-name">{{ data.nome }}</p>
+    <p class="medication-code">Código de Barras</p>
+    <p class="medication-value">{{ data.codigoBarras }}</p>
+  
+    <mat-form-field appearance="outline" class="quantity-field">
+      <mat-label>Quantidade</mat-label>
+      <input matInput type="number" [(ngModel)]="quantidade" />
+    </mat-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-stroked-button (click)="cancelar()">CANCELAR</button>
+    <button mat-flat-button color="primary" (click)="confirmar()">RETIRAR</button>
+  </mat-dialog-actions>
+  
+
+<!-- 
+@if (!cameraStatus) {
+} -->
+
+<!-- <div id="barcode-scanner"></div> -->
+

@@ -1,0 +1,37 @@
+# Node modules
+node_modules/
+
+# Angular build output
+dist/
+out-tsc/
+
+# Build artifacts
+tmp/
+temp/
+*.log
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Environment files (se você quiser manter local)
+*.env
+*.local
+
+# Compiled TypeScript
+**/*.js
+**/*.js.map
+
+# Coverage reports
+coverage/
+
+# Optional: ignore local environment settings
+.angular/
+.env
+.env.*.local
+.backend/
+.whisper-local/
