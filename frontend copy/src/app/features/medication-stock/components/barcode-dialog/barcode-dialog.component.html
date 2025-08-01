@@ -1,0 +1,21 @@
+<h2 mat-dialog-title>Retirar Medicação</h2>
+
+@if (cameraStatus){
+<mat-dialog-content>
+  <div id="barcode-scanner"></div>
+</mat-dialog-content>
+}
+
+@if (scannedCode){
+<div style="margin-top: 20px">
+  <strong>Código lido:</strong> {{ scannedCode }}
+</div>
+}
+
+
+
+<!--
+@if (!cameraStatus) {
+} -->
+
+<!-- <div id="barcode-scanner"></div> -->

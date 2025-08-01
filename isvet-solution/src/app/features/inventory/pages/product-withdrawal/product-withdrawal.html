@@ -1,0 +1,136 @@
+<div class="card container-card">
+  <p class="font-bold text-3xl text-center">Retirada de Medicamentos</p>
+  <p class="text-center mb-4 text-xl">
+    Escaneie os medicamentos para adicioná-los à lista
+  </p>
+  <div class="input-group">
+    <input
+      class="barcode"
+      #barcodeInputElement
+      type="text"
+      pInputText
+      autofocus
+      autocomplete="off"
+      placeholder="Escaneie ou digite o código de barras"
+      [(ngModel)]="barcodeInput"
+      (keyup.enter)="onScan(barcodeInput)"
+    />
+    <button
+      pButton
+      type="submit"
+      icon="pi pi-plus"
+      (click)="onScan(barcodeInput)"
+    >
+      Adicionar
+    </button>
+    <button
+      pButton
+      icon="pi pi-camera"
+      class="p-button-info"
+      (click)="onScan(barcodeInput)"
+    >
+      Ler com Câmera
+    </button>
+  </div>
+
+  @if (medications().length > 0) {
+  <div class="mt-3">
+    <p-table
+      [value]="medications()"
+      responsiveLayout="scroll"
+      size="large"
+      stripedRows
+    >
+      <ng-template #header>
+        <tr>
+          <th class="medication-col">Medicação</th>
+          <th>Quantidade</th>
+          <th class="actions-col"></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-medication let-index="rowIndex">
+        <tr>
+          <td>{{ medication.name }}</td>
+          <td
+            [pEditableColumn]="medication.quantity"
+            pEditableColumnField="quantity"
+          >
+            <p-cellEditor>
+              <ng-template #input #output>
+                <p-inputnumber
+                  [inputStyle]="{ width: '2.5rem' }"
+                  [(ngModel)]="medication.quantity"
+                  [showButtons]="true"
+                  buttonLayout="horizontal"
+                  inputId="horizontal"
+                  spinnerMode="horizontal"
+                  [step]="1"
+                >
+                  <ng-template #incrementbuttonicon>
+                    <span class="pi pi-plus"></span>
+                  </ng-template>
+                  <ng-template #decrementbuttonicon>
+                    <span class="pi pi-minus"></span>
+                  </ng-template>
+                </p-inputnumber>
+              </ng-template>
+            </p-cellEditor>
+          </td>
+
+          <td class="actions">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              text
+              rounded
+              severity="danger"
+              title="Remover"
+              (click)="cancelAllFromBarcode(medication.barcode)"
+            ></button>
+
+            <button
+              *ngIf="medication.name === 'Medicação não encontrada'"
+              pButton
+              title="Selecionar Manualmente"
+              icon="pi pi-pencil"
+              text
+              rounded
+              severity="secondary"
+              (click)="showDialog()"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  } @else {
+  <div class="mt-8">
+    <p-divider type="dashed" />
+    <p class="font-semibold text-xl text-center">
+      Aguardando leitura de código de barras.
+    </p>
+  </div>
+  }
+</div>
+
+<p-dialog
+  header="Reporte erro"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '25rem' }"
+>
+  <span class="p-text-secondary block mb-8">Adicione um produto</span>
+  <div class="flex items-center gap-4 mb-4">
+    <label for="username" class="font-semibold w-24">Username</label>
+    <input pInputText id="username" class="flex-auto" autocomplete="off" />
+  </div>
+  <div class="flex items-center gap-4 mb-8">
+    <label for="email" class="font-semibold w-24">Email</label>
+    <input pInputText id="email" class="flex-auto" autocomplete="off" />
+  </div>
+  <div class="flex justify-end gap-2">
+    <p-button label="Cancel" severity="secondary" (click)="visible = false" />
+    <p-button label="Save" (click)="visible = false" />
+  </div>
+</p-dialog>

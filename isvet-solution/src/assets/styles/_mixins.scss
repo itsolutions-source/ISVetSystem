@@ -1,0 +1,24 @@
+@use 'variables' as *;
+
+@mixin respond-to($breakpoint) {
+  $size: map-get($breakpoints, $breakpoint);
+  @if $size != null {
+    @media (max-width: $size) {
+      @content;
+    }
+  } @else {
+    @warn "Breakpoint #{$breakpoint} não encontrado em \$breakpoints.";
+  }
+}
+
+// Exemplo: centralizar elementos
+@mixin center-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// Exemplo: sombra padrão
+@mixin card-shadow {
+  box-shadow: 0 3px 12px $shadow-color;
+}
