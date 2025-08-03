@@ -40,7 +40,7 @@
         <tr>
           <th class="w-1/2 sm:w-[60%]">Medicação</th>
           <th class="w-1/4 sm:w-[25%]">Quantidade</th>
-          <th class="w-1/4 sm:w-[15%] text-center">Ações</th>
+          <th class="w-1/4 sm:w-[15%]"></th>
         </tr>
       </ng-template>
       <ng-template #body let-medication let-index="rowIndex">
@@ -52,12 +52,27 @@
                 else normalName
               "
             >
-              <p-tag value="Medicação não encontrada" severity="danger"></p-tag>
-              
+              <p>Código: {{ medication.barcode }}</p>
+
+              <p-tag value="Código não encontrado" severity="danger" ></p-tag>
+
+               <div class="mt-2">
+              <label class="block text-sm text-red-700 font-medium mb-1"
+                >Observação:</label
+              >
+              <input
+                type="text"
+                [(ngModel)]="medication.observacao"
+                required
+                placeholder="Descreva o nome da medicação"
+                class="p-inputtext w-full border border-red-400"
+              />
+            </div>
             </ng-container>
 
             <ng-template #normalName>
-              {{ medication.name }}
+              <p>Código: {{ medication.barcode }}</p>
+              <p>{{ medication.name }}</p>
             </ng-template>
           </td>
           <td
@@ -75,7 +90,6 @@
                   buttonLayout="horizontal"
                   inputId="horizontal"
                   spinnerMode="horizontal"
-                  [disabled]="medication.name === 'Medicação não encontrada'"
                   [step]="1"
                 >
                   <ng-template #incrementbuttonicon>
@@ -102,7 +116,6 @@
             ></button>
 
             <button
-              *ngIf="medication.name === 'Medicação não encontrada'"
               pButton
               title="Selecionar Manualmente"
               icon="pi pi-pencil"

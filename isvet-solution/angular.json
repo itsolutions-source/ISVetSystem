@@ -19,8 +19,10 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "baseHref": "/isvet-solutions/",
+            "outputPath": "dist/ISVetSystem",
             "inlineStyleLanguage": "scss",
+            "baseHref": "/ISVetSystem/",
+
             "stylePreprocessorOptions": {
               "includePaths": ["src/assets/styles"]
             },
@@ -46,10 +48,11 @@
                   "maximumError": "10kb"
                 }
               ],
-              "outputHashing": "all",
+              "outputHashing": "none",
               "optimization": true,
               "sourceMap": false,
-              "extractLicenses": true
+              "extractLicenses": true,
+              "baseHref": "/ISVetSystem/"
             },
             "development": {
               "optimization": false,
