@@ -33,6 +33,8 @@
     }
   }
 
+
+
   .input-group {
     display: flex;
     flex-wrap: wrap;
@@ -57,14 +59,6 @@
     }
   }
 
-  .medication-col {
-    width: 60%;
-  }
-
-  .actions-col {
-    width: 25%;
-  }
-
   .p-invalid {
     border: 1px solid $error-color !important;
   }
@@ -72,15 +66,44 @@
   .empty-info {
     margin-top: $spacing-lg;
   }
+}
 
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $spacing-sm;
+::ng-deep .fullscreen-dialog {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0;
+  border-radius: 0;
 
-    button {
-      min-width: 2.5rem;
-      height: 2.5rem;
-    }
+  .p-dialog-content {
+    height: calc(100vh - 4rem); // ajusta para o cabeçalho
+    padding: 0;
+    overflow: hidden;
+  }
+}
+
+.scanner-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: #000;
+
+  .video-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .overlay {
+    position: absolute;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    width: 100%;
+    text-align: center;
+    padding: 1rem;
+    font-size: 1.2rem;
   }
 }

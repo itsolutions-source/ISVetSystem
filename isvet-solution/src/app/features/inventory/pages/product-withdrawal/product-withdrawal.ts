@@ -1,13 +1,16 @@
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
+  OnInit,
   signal,
   ViewChild,
-  WritableSignal,
+  WritableSignal
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,6 +20,8 @@ import { delay, of } from 'rxjs';
 
 import { DividerModule } from 'primeng/divider';
 import { InputNumber } from 'primeng/inputnumber';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
 
 interface MedicationItem {
   barcode: string;
@@ -40,15 +45,23 @@ interface MedicationItem {
     ButtonModule,
     DividerModule,
     InputNumber,
+    SelectModule,
+    TagModule,
   ],
   templateUrl: './product-withdrawal.html',
-  styleUrl: './product-withdrawal.scss'
+  styleUrl: './product-withdrawal.scss',
 })
-export class ProductWithdrawal implements AfterViewInit {
+export class ProductWithdrawal implements AfterViewInit, OnInit {
   @ViewChild('barcodeInputElement')
   barcodeInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('video') videoElement!: ElementRef<HTMLVideoElement>;
+
   visible: boolean = false;
   barcodeInput = '';
+
+  cameras: MediaDeviceInfo[] = [];
+  selectedCamera: MediaDeviceInfo | null = null;
+  selectedCameraLabel: any;
 
   readonly medications: WritableSignal<MedicationItem[]> = signal([]);
   private readonly medicationsMock: Record<string, string> = {
@@ -73,6 +86,76 @@ export class ProductWithdrawal implements AfterViewInit {
     '19': 'Gentamicina 40mg/mL',
     '20': 'Loratadina 10mg',
   };
+
+  codeResult: string = '';
+  private codeReader = new BrowserMultiFormatReader();
+  private controls?: IScannerControls;
+  scan = false;
+
+  constructor(private cd: ChangeDetectorRef) {}
+
+  isMobile(): boolean {
+    return window.innerWidth < 640; // Tailwind breakpoint sm = 640px
+  }
+
+  async ngOnInit() {
+    this.cameras = await BrowserMultiFormatReader.listVideoInputDevices();
+    this.selectedCamera = this.cameras[0];
+    this.cd.detectChanges();
+  }
+
+  onCameraChange(): void {
+    this.stopScanner();
+    this.startScanner();
+  }
+
+  startScanner(): void {
+    this.scan = true;
+
+    if (!this.selectedCamera || !this.videoElement) return;
+
+    this.codeReader.decodeFromVideoDevice(
+      this.selectedCamera.deviceId,
+      this.videoElement.nativeElement,
+      (result, err, controls) => {
+        if (result) {
+          alert('result: ' + result?.getText());
+
+          this.codeResult = result.getText();
+          this.onScan(this.codeResult);
+          // this.scan = false;
+          this.cd.detectChanges();
+          // controls.stop();
+        }
+        this.controls = controls;
+      }
+    );
+  }
+
+  private stopScanner(): void {
+    this.controls?.stop();
+  }
+
+  ngOnDestroy(): void {
+    this.stopScanner();
+  }
+
+  teste(): void {
+    this.scan = true;
+    this.codeReader
+      .decodeFromVideoDevice(
+        this.selectedCamera?.deviceId,
+        this.videoElement.nativeElement,
+        (result: any, error: any) => {
+          if (result) {
+            this.codeResult = result.getText();
+            this.onScan(this.codeResult);
+            this.scan = false;
+          }
+        }
+      )
+      .catch((err) => console.error('Erro ao acessar câmera:', err));
+  }
 
   ngAfterViewInit(): void {
     this.focusInput();
