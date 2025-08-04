@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -7,21 +6,12 @@ import {
   OnInit,
   signal,
   ViewChild,
-  WritableSignal
+  WritableSignal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
-import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
 
-import { TableModule } from 'primeng/table';
 import { delay, of } from 'rxjs';
-
-import { DividerModule } from 'primeng/divider';
-import { InputNumber } from 'primeng/inputnumber';
-import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
+import { CommonComponentsModule } from '../../../../shared/common-components-module';
 
 interface MedicationItem {
   barcode: string;
@@ -32,22 +22,7 @@ interface MedicationItem {
 
 @Component({
   selector: 'app-product-withdrawal',
-  imports: [
-    CommonModule,
-    TableModule,
-    ButtonModule,
-    FormsModule,
-    InputTextModule,
-    DialogModule,
-    CommonModule,
-    FormsModule,
-    InputTextModule,
-    ButtonModule,
-    DividerModule,
-    InputNumber,
-    SelectModule,
-    TagModule,
-  ],
+  imports: [CommonComponentsModule],
   templateUrl: './product-withdrawal.html',
   styleUrl: './product-withdrawal.scss',
 })
@@ -55,6 +30,7 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
   @ViewChild('barcodeInputElement')
   barcodeInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('video') videoElement!: ElementRef<HTMLVideoElement>;
+  @ViewChild('scannerInput') scannerInput!: ElementRef<HTMLInputElement>;
 
   visible: boolean = false;
   barcodeInput = '';
@@ -92,6 +68,10 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
   private controls?: IScannerControls;
   scan = false;
 
+  failedAttempts = 0;
+  maxAttempts = 0;
+  lastTriedBarcode = '';
+
   constructor(private cd: ChangeDetectorRef) {}
 
   isMobile(): boolean {
@@ -109,8 +89,34 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     this.startScanner();
   }
 
+  // startScanner(): void {
+  //   this.scan = true;
+
+  //   if (!this.selectedCamera || !this.videoElement) return;
+
+  //   this.codeReader.decodeFromVideoDevice(
+  //     this.selectedCamera.deviceId,
+  //     this.videoElement.nativeElement,
+  //     (result, err, controls) => {
+  //       if (result) {
+  //         alert('result: ' + result?.getText());
+
+  //         this.codeResult = result.getText();
+  //         this.onScan(this.codeResult);
+  //         this.scan = false;
+  //         controls.stop();
+  //         this.cd.detectChanges();
+  //       }
+  //       this.controls = controls;
+  //     }
+  //   );
+  // }
+
   startScanner(): void {
     this.scan = true;
+    this.failedAttempts = 0;
+    this.maxAttempts = 10;
+    this.lastTriedBarcode = '';
 
     if (!this.selectedCamera || !this.videoElement) return;
 
@@ -119,20 +125,67 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       this.videoElement.nativeElement,
       (result, err, controls) => {
         if (result) {
-          alert('result: ' + result?.getText());
+          const scannedCode = result.getText();
 
-          this.codeResult = result.getText();
-          this.onScan(this.codeResult);
-          // this.scan = false;
-          this.cd.detectChanges();
-          // controls.stop();
+          // Evita processar o mesmo código repetidamente
+          if (scannedCode && scannedCode !== this.lastTriedBarcode) {
+            this.lastTriedBarcode = scannedCode;
+
+            this.fetchMedicationName(scannedCode).subscribe({
+              next: (name) => {
+                if (name) {
+                  this.addMedication(scannedCode, name);
+                  controls.stop();
+                  this.scan = false;
+                  this.cd.detectChanges();
+                } else {
+                  this.failedAttempts++;
+                  this.tryHandleNotFound(scannedCode, controls);
+                }
+              },
+              error: () => {
+                this.failedAttempts++;
+                this.tryHandleNotFound(scannedCode, controls);
+              },
+            });
+          }
         }
+
         this.controls = controls;
       }
     );
   }
 
-  private stopScanner(): void {
+  private tryHandleNotFound(barcode: string, controls: any): void {
+    if (this.failedAttempts >= this.maxAttempts) {
+      this.addMedication(barcode, 'Medicação não encontrada');
+      controls.stop();
+      this.scan = false;
+      this.cd.detectChanges();
+    }
+  }
+
+  private addMedication(barcode: string, name: string): void {
+    const current = this.medications();
+    const idx = current.findIndex((m) => m.barcode === barcode);
+
+    if (idx >= 0) {
+      this.medications.update((arr) => {
+        arr[idx].quantity++;
+        return [...arr];
+      });
+    } else {
+      this.medications.update((arr) => [
+        ...arr,
+        { barcode, name, quantity: 1, observacao: '' },
+      ]);
+    }
+
+    this.barcodeInput = '';
+    this.focusInput();
+  }
+
+  stopScanner(): void {
     this.controls?.stop();
   }
 
@@ -140,27 +193,21 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     this.stopScanner();
   }
 
-  teste(): void {
-    this.scan = true;
-    this.codeReader
-      .decodeFromVideoDevice(
-        this.selectedCamera?.deviceId,
-        this.videoElement.nativeElement,
-        (result: any, error: any) => {
-          if (result) {
-            this.codeResult = result.getText();
-            this.onScan(this.codeResult);
-            this.scan = false;
-          }
-        }
-      )
-      .catch((err) => console.error('Erro ao acessar câmera:', err));
-  }
-
   ngAfterViewInit(): void {
-    this.focusInput();
+    // this.focusInput();
+    this.keepScannerFocused();
   }
 
+  keepScannerFocused(): void {
+    const input = this.scannerInput.nativeElement;
+
+    // Aplica o foco de forma contínua com delay
+    input.focus();
+
+    // input.addEventListener('blur', () => {
+    //   setTimeout(() => input.focus(), 100);
+    // });
+  }
   hasUnidentifiedMedication(): boolean {
     return this.medications().some(
       (m) => m.name === 'Medicação não encontrada'
@@ -245,5 +292,31 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
 
   private focusInput(): void {
     setTimeout(() => this.barcodeInputRef?.nativeElement?.focus(), 0);
+  }
+
+  barcodeBuffer: string = '';
+  scanTimeout: any;
+
+  handleKey(event: KeyboardEvent): void {
+    const key = event.key;
+
+    if (this.scanTimeout) clearTimeout(this.scanTimeout);
+
+    if (key === 'Enter') {
+      const scanned = this.barcodeBuffer.trim();
+      this.barcodeBuffer = '';
+
+      if (scanned) {
+        console.log('Simulação de leitura:', scanned);
+        this.onScan(scanned); // como se fosse o leitor
+      }
+    } else if (key.length === 1) {
+      this.barcodeBuffer += key;
+
+      // Se o Enter não vier, zera o buffer após 1s
+      this.scanTimeout = setTimeout(() => {
+        this.barcodeBuffer = '';
+      }, 1000);
+    }
   }
 }

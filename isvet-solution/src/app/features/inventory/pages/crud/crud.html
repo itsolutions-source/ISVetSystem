@@ -1,0 +1,270 @@
+<p-toolbar styleClass="mb-6">
+  <ng-template #start>
+    <p-button
+      label="Cadastrar novo produto"
+      icon="pi pi-plus"
+      severity="secondary"
+      class="mr-2"
+      (onClick)="openNew()"
+    />
+    <p-button
+      severity="secondary"
+      label="Deletar"
+      icon="pi pi-trash"
+      outlined
+      (onClick)="deleteSelectedProducts()"
+      [disabled]="!selectedProducts || !selectedProducts.length"
+    />
+  </ng-template>
+
+  <ng-template #end>
+    <p-button
+      label="Export"
+      icon="pi pi-upload"
+      severity="secondary"
+      (onClick)="exportCSV()"
+    />
+  </ng-template>
+</p-toolbar>
+
+<div class="card">
+  <p-table
+    #dt
+    [value]="products()"
+    [rows]="10"
+    [columns]="cols"
+    [paginator]="true"
+    [globalFilterFields]="[
+      'barcode',
+      'name',
+      'description',
+      'manufacturer',
+      'batch'
+    ]"
+    [tableStyle]="{ 'min-width': '90rem' }"
+    [(selection)]="selectedProducts"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Mostrando {first} até {last} de {totalRecords} medicamentos"
+    [showCurrentPageReport]="true"
+    [rowsPerPageOptions]="[10, 20, 30]"
+  >
+    <ng-template #caption>
+      <div class="flex items-center justify-between">
+        <h5 class="m-0">Controle de Estoque de Medicamentos</h5>
+        <p-iconfield>
+          <p-inputicon styleClass="pi pi-search" />
+          <input
+            pInputText
+            type="text"
+            (input)="onGlobalFilter(dt, $event)"
+            placeholder="Pesquisar..."
+          />
+        </p-iconfield>
+      </div>
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        <th style="width: 3rem">
+          <p-tableHeaderCheckbox />
+        </th>
+        <th pSortableColumn="barcode">
+          Código de Barras <p-sortIcon field="barcode" />
+        </th>
+        <th pSortableColumn="name">Nome <p-sortIcon field="name" /></th>
+        <th pSortableColumn="manufacturer">
+          Fabricante <p-sortIcon field="manufacturer" />
+        </th>
+        <th pSortableColumn="batch">Lote <p-sortIcon field="batch" /></th>
+        <th pSortableColumn="expirationDate">
+          Validade <p-sortIcon field="expirationDate" />
+        </th>
+        <th pSortableColumn="stock">Estoque <p-sortIcon field="stock" /></th>
+        <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+        <th style="min-width: 8rem">Ações</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-product>
+      <tr>
+        <td>
+          <p-tableCheckbox [value]="product" />
+        </td>
+        <td>{{ product.barcode }}</td>
+        <td>{{ product.name }}</td>
+        <td>{{ product.manufacturer }}</td>
+        <td>{{ product.batch }}</td>
+        <td>{{ product.expirationDate | date : "dd/MM/yyyy" }}</td>
+        <td>{{ product.stock }}</td>
+        <td>
+          <p-tag
+            [value]="product.status"
+            [severity]="getSeverity(product.status)"
+          ></p-tag>
+        </td>
+        <td>
+          <p-button
+            icon="pi pi-pencil"
+            class="mr-2"
+            title="Editar produto"
+            severity="secondary"
+            [rounded]="true"
+            [outlined]="true"
+            (click)="editProduct(product)"
+          />
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            title="Remover"
+            [rounded]="true"
+            [outlined]="true"
+            (click)="deleteProduct(product)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [(visible)]="productDialog"
+  [style]="{ width: '600px' }"
+  header="Cadastro de Medicamento"
+  [modal]="true"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6">
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6">
+          <label for="barcode" class="block font-bold mb-3"
+            >Código de Barras</label
+          >
+          <input
+            type="text"
+            pInputText
+            id="barcode"
+            [(ngModel)]="product.barcode"
+            required
+            autofocus
+            class="w-full"
+          />
+          <small class="text-red-500" *ngIf="submitted && !product.barcode">
+            Código de barras é obrigatório.
+          </small>
+        </div>
+        <div class="col-span-6">
+          <label for="name" class="block font-bold mb-3"
+            >Nome do Medicamento</label
+          >
+          <input
+            type="text"
+            pInputText
+            id="name"
+            [(ngModel)]="product.name"
+            required
+            class="w-full"
+          />
+          <small class="text-red-500" *ngIf="submitted && !product.name">
+            Nome é obrigatório.
+          </small>
+        </div>
+      </div>
+
+      <div>
+        <label for="description" class="block font-bold mb-3">Descrição</label>
+        <textarea
+          id="description"
+          pTextarea
+          [(ngModel)]="product.description"
+          rows="3"
+          cols="20"
+          class="w-full"
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6">
+          <label for="batch" class="block font-bold mb-3">Lote</label>
+          <input
+            type="text"
+            pInputText
+            id="batch"
+            [(ngModel)]="product.batch"
+            class="w-full"
+          />
+        </div>
+
+        <div class="col-span-6">
+          <label for="manufacturer" class="block font-bold mb-3"
+            >Fabricante</label
+          >
+          <input
+            type="text"
+            pInputText
+            id="manufacturer"
+            [(ngModel)]="product.manufacturer"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div></div>
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6">
+          <label for="stock" class="block font-bold mb-3">Estoque</label>
+          <p-inputnumber
+            id="stock"
+            [(ngModel)]="product.stock"
+            [min]="0"
+            class="w-full"
+          />
+        </div>
+
+        <div class="col-span-6">
+          <label for="unit" class="block font-bold mb-3"
+            >Estoque mínimo desejável</label
+          >
+          <p-inputnumber
+            id="stock"
+            [(ngModel)]="product.stockMin"
+            [min]="0"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-6">
+          <label for="unit" class="block font-bold mb-3">Unidade</label>
+          <p-select
+            inputId="unit"
+            [(ngModel)]="product.unit"
+            [options]="unitOptions"
+            placeholder="Selecione"
+            class="w-full"
+          />
+        </div>
+
+        <div class="col-span-6">
+          <label for="expirationDate" class="block font-bold mb-3"
+            >Validade</label
+          >
+          <p-datepicker
+            id="expirationDate"
+            [(ngModel)]="product.expirationDate"
+            dateFormat="dd/mm/yy"
+            iconDisplay="input"
+            showIcon="true"
+            class="w-full"
+          />
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+    <p-button label="Salvar" icon="pi pi-check" (click)="saveProduct()" />
+  </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }" />

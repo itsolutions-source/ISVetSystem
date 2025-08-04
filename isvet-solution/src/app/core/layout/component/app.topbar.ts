@@ -33,7 +33,7 @@ import { LayoutService } from '../service/layout.service';
                         />
                     </g>
                 </svg>
-                <span>ISVetSolutions</span>
+                <span>ISVetSystem</span>
             </a>
         </div>
 

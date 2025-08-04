@@ -4,7 +4,7 @@
 .container-card {
   @include card-shadow;
   padding: $spacing-lg;
-  max-width: 800px;
+  width: 950px;
 
   @include respond-to(xl) {
     max-width: 100% !important;
