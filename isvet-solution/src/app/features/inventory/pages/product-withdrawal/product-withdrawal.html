@@ -19,7 +19,7 @@
       type="text"
       pInputText
       autocomplete="off"
-      placeholder="Escaneie ou digite o código de barras"
+      placeholder="Digite código de barras ou nome do medicamento"
       [(ngModel)]="barcodeInput"
       (keydown)="handleKey($event)"
     />
@@ -51,10 +51,10 @@
     >
       <ng-template #header>
         <tr>
-          <th class="w-1/5 sm:w-[15%]">Código</th>
-          <th class="w-1/2 sm:w-[55%]">Medicação</th>
-          <th class="w-1/5 sm:w-[15%]">Quantidade</th>
-          <th class="w-1/5 sm:w-[15%]"></th>
+          <th class="w-1/5 sm:w-[16%]">Código</th>
+          <th class="w-1/2 sm:w-[57%]">Medicação</th>
+          <th class="w-1/5 sm:w-[17%]">Quantidade</th>
+          <th class="w-1/5 sm:w-[10%]"></th>
         </tr>
       </ng-template>
       <ng-template #body let-medication let-index="rowIndex">
@@ -66,13 +66,13 @@
             @if (medication.name === 'Medicação não encontrada') {
             <p-tag value="Código não encontrado" severity="danger"></p-tag>
             <div class="mt-2">
-              <input
-                type="text"
-                [(ngModel)]="medication.observacao"
-                required
-                placeholder="Descreva o nome da medicação"
-                class="p-inputtext w-full border border-red-400"
-              />
+              <button
+                pButton
+                icon="pi pi-list"
+                label="Selecionar Produto"
+                class="p-button-sm p-button-info mt-2"
+                (click)="openManualSelection(medication)"
+              ></button>
             </div>
 
             } @else {
@@ -109,15 +109,6 @@
 
           <td>
             <p-button
-              title="Editar produto"
-              icon="pi pi-pencil"
-              class="mr-2"
-              severity="secondary"
-              [rounded]="true"
-              [outlined]="true"
-              (click)="showDialog()"
-            ></p-button>
-            <p-button
               icon="pi pi-trash"
               severity="danger"
               [rounded]="true"
@@ -139,27 +130,6 @@
   </div>
   }
 </div>
-
-<p-dialog
-  header="Reporte erro"
-  [modal]="true"
-  [(visible)]="visible"
-  [style]="{ width: '25rem' }"
->
-  <span class="p-text-secondary block mb-8">Adicione um produto</span>
-  <div class="flex items-center gap-4 mb-4">
-    <label for="username" class="font-semibold w-24">Username</label>
-    <input pInputText id="username" class="flex-auto" autocomplete="off" />
-  </div>
-  <div class="flex items-center gap-4 mb-8">
-    <label for="email" class="font-semibold w-24">Email</label>
-    <input pInputText id="email" class="flex-auto" autocomplete="off" />
-  </div>
-  <div class="flex justify-end gap-2">
-    <p-button label="Cancel" severity="secondary" (click)="visible = false" />
-    <p-button label="Save" (click)="visible = false" />
-  </div>
-</p-dialog>
 
 <p-dialog
   [(visible)]="scan"
@@ -184,14 +154,6 @@
     />
     <label for="on_label">Selecionar câmera</label>
   </p-floatlabel>
-  <!-- <p-select
-    [options]="cameras"
-    [(ngModel)]="selectedCamera"
-    optionLabel="label"
-    placeholder="Selecionar câmera"
-    (onChange)="onCameraChange()"
-    class="w-full sm:w-80 md:w-[28rem] max-w-full mb-2"
-  ></p-select> -->
 
   <div class="relative w-full h-[calc(100vh-20rem)] bg-black rounded-xl">
     <video
@@ -209,3 +171,170 @@
     </div> -->
   </div>
 </p-dialog>
+
+<p-dialog
+  [(visible)]="productSelectVisible"
+  [modal]="true"
+  [style]="{ width: '60rem', maxWidth: '95vw' }"
+  [breakpoints]="{ '1199px': '75vw', '768px': '90vw', '575px': '95vw' }"
+  header="Selecionar produto"
+  [dismissableMask]="true"
+  [closeOnEscape]="true"
+>
+  <div class="mb-3 flex items-center gap-2">
+    <p-floatlabel class="w-full md:w-96">
+      <input
+        #searchProductsInput
+        pInputText
+        id="searchProducts"
+        class="w-full"
+        placeholder="Buscar por nome ou código"
+        [(ngModel)]="productSearch"
+        (input)="filterProducts()"
+        (keydown.enter)="confirmIfSingleResult()"
+      />
+      <label for="searchProducts">Buscar</label>
+    </p-floatlabel>
+
+    <p-button
+      icon="pi pi-times"
+      label="Limpar"
+      severity="secondary"
+      (click)="clearProductSearch()"
+    />
+
+    <p-button
+      icon="pi pi-plus"
+      label="Cadastrar novo"
+      (click)="toggleNewProduct(true)"
+    />
+  </div>
+
+  @if (showNewProductForm) {
+  <div class="p-3 border rounded-lg mb-3">
+    <div class="text-sm opacity-80 mb-2">
+      Dica: informe um <strong>nome</strong> (mín. 4 letras). O
+      <strong>código de barras</strong> é opcional. Este cadastro rápido
+      registra apenas nome e código de barras. Para finalizar o cadastro
+      (unidade, fabricante, lote, validade, estoque etc.), acesse
+      <strong>Estoque &gt; Cadastro de produtos.</strong>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-8 mt-8">
+      <p-floatlabel class="w-full">
+        <input
+          pInputText
+          id="newProdName"
+          class="w-full"
+          placeholder="Nome da medicação"
+          [(ngModel)]="newProduct.name"
+          [ngClass]="{ 'p-invalid': newProductErrors.name }"
+          (input)="validateNewProduct()"
+        />
+        <label for="newProdName">Nome*</label>
+      </p-floatlabel>
+
+      <p-floatlabel class="w-full md:w-84">
+        <input
+          pInputText
+          id="newProdBarcode"
+          class="w-full"
+          placeholder="Código de barras (opcional)"
+          [(ngModel)]="newProduct.barcode"
+          [ngClass]="{ 'p-invalid': newProductErrors.barcode }"
+          (input)="validateNewProduct()"
+        />
+        <label for="newProdBarcode">Código de barras</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="mt-2 text-red-500 text-sm space-y-1">
+      @if (newProductErrors.name) {
+      <div>• Nome deve ter pelo menos 4 caracteres.</div>
+      } @if (newProductErrors.barcodeExists) {
+      <div>• Já existe um produto com esse código.</div>
+      } @if (newProductErrors.nameExists) {
+      <div class="flex items-center gap-2">
+        <span
+          >• Já existe um produto com esse nome. Você pode reaproveitá-lo.</span
+        >
+        <p-button
+          text
+          size="small"
+          icon="pi pi-search"
+          label="Localizar existente"
+          (click)="goToSearchExisting()"
+        />
+      </div>
+      }
+    </div>
+
+    <div class="mt-3 flex gap-2 justify-end">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        (click)="toggleNewProduct(false)"
+      />
+      <p-button
+        label="Salvar e usar"
+        icon="pi pi-check"
+        [disabled]="!canSaveNewProduct"
+        (click)="saveNewProductAndUse()"
+      />
+    </div>
+  </div>
+  }
+
+  <p-table
+    [value]="filteredProducts"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 20]"
+    [rowHover]="true"
+    [metaKeySelection]="false"
+    selectionMode="single"
+    [(selection)]="selectedProduct"
+    (onRowSelect)="confirmSelectProduct()"
+    [tableStyle]="{ 'min-width': '30rem' }"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="width: 25%">Código</th>
+        <th style="width: 75%">Medicação</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-prod>
+      <tr [pSelectableRow]="prod">
+        <td>{{ prod.barcode }}</td>
+        <td>{{ prod.name }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="2" class="text-center py-6">
+          Nenhum produto encontrado.
+          <p-button
+            text
+            size="small"
+            icon="pi pi-plus"
+            label="Cadastrar novo agora"
+            (click)="toggleNewProduct(true)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      (click)="productSelectVisible = false"
+    />
+  </ng-template>
+</p-dialog>
+
+
+<p-confirmDialog [style]="{ width: '28rem' }"></p-confirmDialog>

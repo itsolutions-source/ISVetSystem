@@ -11,6 +11,7 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 const PRIME_NG_COMPONENTS = [
   CommonModule,
@@ -24,6 +25,7 @@ const PRIME_NG_COMPONENTS = [
   SelectModule,
   TagModule,
   FloatLabelModule,
+  ConfirmDialogModule
 ];
 
 const COMMON_COMPONENTS = [CommonModule, FormsModule];

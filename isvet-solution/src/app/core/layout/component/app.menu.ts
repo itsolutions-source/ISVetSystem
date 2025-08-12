@@ -68,7 +68,7 @@ export class AppMenu {
         label: 'Estoque',
         icon: 'pi pi-fw pi-box',
         items: [
-          { label: 'Visão Geral', icon: 'pi pi-fw pi-table', routerLink: ['/estoque/listagem'] },
+          { label: 'Lista de Produtos', icon: 'pi pi-fw pi-table', routerLink: ['/estoque/listagem'] },
           { label: 'Entrada de Produtos', icon: 'pi pi-fw pi-plus', routerLink: ['/estoque/entrada'] },
           { label: 'Retirada de Produtos', icon: 'pi pi-fw pi-minus', routerLink: ['/estoque/retirada'] },
           { label: 'Inventário', icon: 'pi pi-fw pi-clipboard', routerLink: ['/estoque/inventario'] },
