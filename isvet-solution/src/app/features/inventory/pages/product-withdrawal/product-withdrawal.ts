@@ -4,148 +4,110 @@ import {
   Component,
   ElementRef,
   OnInit,
+  OnDestroy,
   signal,
   ViewChild,
   WritableSignal,
 } from '@angular/core';
 import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
-
 import { delay, of } from 'rxjs';
 import { CommonComponentsModule } from '../../../../shared/common-components-module';
 import { ConfirmationService } from 'primeng/api';
-
-interface MedicationItem {
-  barcode: string;
-  name: string;
-  quantity: number;
-  observation?: string;
-}
+import { MedicationItem } from '../../models/medication-item';
+import { MEDICATIONS_MOCK } from '../../data/medications.mock';
 
 @Component({
   selector: 'app-product-withdrawal',
+  standalone: true,
   imports: [CommonComponentsModule],
   providers: [ConfirmationService],
   templateUrl: './product-withdrawal.html',
   styleUrl: './product-withdrawal.scss',
 })
-export class ProductWithdrawal implements AfterViewInit, OnInit {
-  @ViewChild('scannerInput')
-  barcodeInputRef!: ElementRef<HTMLInputElement>;
+export class ProductWithdrawal
+  implements AfterViewInit, OnInit, OnDestroy
+{
+  // Template references
+  @ViewChild('scannerInput') barcodeInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('video') videoElement!: ElementRef<HTMLVideoElement>;
-  @ViewChild('searchProductsInput')
-  searchProductsInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('searchProductsInput') searchProductsInput!: ElementRef<HTMLInputElement>;
 
-  visible: boolean = false;
+  // Scanner state
+  visible = false;
   barcodeInput = '';
-
   cameras: MediaDeviceInfo[] = [];
   selectedCamera: MediaDeviceInfo | null = null;
-  selectedCameraLabel: any;
-
-  readonly medications: WritableSignal<MedicationItem[]> = signal([]);
-  private readonly medicationsMock: MedicationItem[] = [
-    {
-      barcode: '1',
-      name: 'Dipirona Sódica 500mg',
-      quantity: 0,
-      observation: '',
-    },
-    { barcode: '2', name: 'Amoxicilina 250mg', quantity: 0, observation: '' },
-    { barcode: '3', name: 'Cefalexina 500mg', quantity: 0, observation: '' },
-    { barcode: '4', name: 'Metronidazol 250mg', quantity: 0, observation: '' },
-    { barcode: '5', name: 'Prednisolona 20mg', quantity: 0, observation: '' },
-    { barcode: '6', name: 'Doxiciclina 100mg', quantity: 0, observation: '' },
-    { barcode: '7', name: 'Enrofloxacino 50mg', quantity: 0, observation: '' },
-    { barcode: '8', name: 'Ketoprofeno 50mg', quantity: 0, observation: '' },
-    { barcode: '9', name: 'Omeprazol 10mg', quantity: 0, observation: '' },
-    { barcode: '10', name: 'Ivermectina 6mg', quantity: 0, observation: '' },
-    { barcode: '11', name: 'Carprofeno 25mg', quantity: 0, observation: '' },
-    { barcode: '12', name: 'Furosemida 40mg', quantity: 0, observation: '' },
-    {
-      barcode: '13',
-      name: 'Cloridrato de Tramadol 50mg',
-      quantity: 0,
-      observation: '',
-    },
-    { barcode: '14', name: 'Meloxicam 7,5mg', quantity: 0, observation: '' },
-    { barcode: '15', name: 'Ranitidina 150mg', quantity: 0, observation: '' },
-    {
-      barcode: '16',
-      name: 'Sulfametoxazol + Trimetoprim 400/80mg',
-      quantity: 0,
-      observation: '',
-    },
-    {
-      barcode: '17',
-      name: 'Cloridrato de Difenidramina 25mg',
-      quantity: 0,
-      observation: '',
-    },
-    {
-      barcode: '18',
-      name: 'Ciprofloxacino 500mg',
-      quantity: 0,
-      observation: '',
-    },
-    {
-      barcode: '19',
-      name: 'Gentamicina 40mg/mL',
-      quantity: 0,
-      observation: '',
-    },
-    { barcode: '20', name: 'Loratadina 10mg', quantity: 0, observation: '' },
-  ];
-
-  codeResult: string = '';
+  selectedCameraLabel: string | null = null;
+  codeResult = '';
   private codeReader = new BrowserMultiFormatReader();
   private controls?: IScannerControls;
   scan = false;
-
   failedAttempts = 0;
   maxAttempts = 0;
   lastTriedBarcode = '';
 
+  // Medication data
+  readonly medications: WritableSignal<MedicationItem[]> = signal([]);
+  allProducts: MedicationItem[] = MEDICATIONS_MOCK;
+  filteredProducts: MedicationItem[] = [...MEDICATIONS_MOCK];
+
+  // Form for manually adding new product
+  showNewProductForm = false;
+  newProduct: MedicationItem = { barcode: '', name: '', quantity: 0, observation: '' };
+  newProductErrors = { name: false, barcode: false, barcodeExists: false, nameExists: false };
+  canSaveNewProduct = false;
+
+  // Product selection dialog
+  productSelectVisible = false;
+  productToResolve: MedicationItem | null = null;
+  productSearch = '';
+  selectedProduct: MedicationItem | null = null;
+
+  // Keyboard scanner simulation
+  barcodeBuffer = '';
+  scanTimeout?: ReturnType<typeof setTimeout>;
+
   constructor(
     private cd: ChangeDetectorRef,
-    private confirmationService: ConfirmationService // + ADD
+    private confirmationService: ConfirmationService,
   ) {}
+
+  // Lifecycle --------------------------------------------------
+
+  ngOnInit(): void {
+    this.loadCameras();
+  }
+
+  ngAfterViewInit(): void {
+    this.focusInput();
+  }
+
+  ngOnDestroy(): void {
+    this.stopScanner();
+  }
+
+  private async loadCameras(): Promise<void> {
+    this.cameras = await BrowserMultiFormatReader.listVideoInputDevices();
+    this.selectedCamera = this.cameras[0] ?? null;
+    this.cd.detectChanges();
+  }
+
+  // Utils ------------------------------------------------------
+
   isMobile(): boolean {
     return window.innerWidth < 640; // Tailwind breakpoint sm = 640px
   }
 
-  async ngOnInit() {
-    this.cameras = await BrowserMultiFormatReader.listVideoInputDevices();
-    this.selectedCamera = this.cameras[0];
-    this.cd.detectChanges();
+  private focusInput(): void {
+    setTimeout(() => this.barcodeInputRef?.nativeElement?.focus(), 0);
   }
+
+  // Scanner ----------------------------------------------------
 
   onCameraChange(): void {
     this.stopScanner();
     this.startScanner();
   }
-
-  // startScanner(): void {
-  //   this.scan = true;
-
-  //   if (!this.selectedCamera || !this.videoElement) return;
-
-  //   this.codeReader.decodeFromVideoDevice(
-  //     this.selectedCamera.deviceId,
-  //     this.videoElement.nativeElement,
-  //     (result, err, controls) => {
-  //       if (result) {
-  //         alert('result: ' + result?.getText());
-
-  //         this.codeResult = result.getText();
-  //         this.onScan(this.codeResult);
-  //         this.scan = false;
-  //         controls.stop();
-  //         this.cd.detectChanges();
-  //       }
-  //       this.controls = controls;
-  //     }
-  //   );
-  // }
 
   startScanner(): void {
     this.scan = true;
@@ -153,7 +115,9 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     this.maxAttempts = 10;
     this.lastTriedBarcode = '';
 
-    if (!this.selectedCamera || !this.videoElement) return;
+    if (!this.selectedCamera || !this.videoElement) {
+      return;
+    }
 
     this.codeReader.decodeFromVideoDevice(
       this.selectedCamera.deviceId,
@@ -161,8 +125,6 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       (result, err, controls) => {
         if (result) {
           const scannedCode = result.getText();
-
-          // Evita processar o mesmo código repetidamente
           if (scannedCode && scannedCode !== this.lastTriedBarcode) {
             this.lastTriedBarcode = scannedCode;
 
@@ -185,13 +147,12 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
             });
           }
         }
-
         this.controls = controls;
       }
     );
   }
 
-  private tryHandleNotFound(barcode: string, controls: any): void {
+  private tryHandleNotFound(barcode: string, controls: IScannerControls): void {
     if (this.failedAttempts >= this.maxAttempts) {
       this.addMedication(barcode, 'Medicação não encontrada');
       controls.stop();
@@ -199,6 +160,17 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       this.cd.detectChanges();
     }
   }
+
+  stopScanner(): void {
+    this.controls?.stop();
+  }
+
+  onOpenCamera(): void {
+    const simulatedCode = '123';
+    this.onScan(simulatedCode);
+  }
+
+  // Medication operations --------------------------------------
 
   private addMedication(barcode: string, name: string): void {
     const current = this.medications();
@@ -212,41 +184,12 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     } else {
       this.medications.update((arr) => [
         ...arr,
-        { barcode, name, quantity: 1, observacao: '' },
+        { barcode, name, quantity: 1, observation: '' },
       ]);
     }
 
     this.barcodeInput = '';
     this.focusInput();
-  }
-
-  stopScanner(): void {
-    this.controls?.stop();
-  }
-
-  ngOnDestroy(): void {
-    this.stopScanner();
-  }
-
-  ngAfterViewInit(): void {
-    this.focusInput();
-    // this.keepScannerFocused();
-  }
-
-  // keepScannerFocused(): void {
-  //   // const input = this.scannerInput.nativeElement;
-
-  //   // Aplica o foco de forma contínua com delay
-  //   // input.focus();
-
-  //   // input.addEventListener('blur', () => {
-  //   //   setTimeout(() => input.focus(), 100);
-  //   // });
-  // }
-  hasUnidentifiedMedication(): boolean {
-    return this.medications().some(
-      (m) => m.name === 'Medicação não encontrada'
-    );
   }
 
   onScan(input: string): void {
@@ -255,31 +198,22 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     const term = input.trim();
     let match: MedicationItem | undefined;
 
-    // Helper para normalizar (remove acentos) e comparar em minúsculas
     const norm = (s: string) =>
       s
         .normalize('NFD')
         .replace(/\p{Diacritic}/gu, '')
         .toLowerCase();
 
-    // 1) Tenta match exato por código de barras (apenas dígitos)
     if (/^\d+$/.test(term)) {
-      match = this.medicationsMock.find((m) => m.barcode === term);
-    } else {
-      // 2) Se não é código, só tenta por nome se tiver pelo menos 4 caracteres
-      if (term.length >= 4) {
-        const nterm = norm(term);
-        match = this.medicationsMock.find((m) => norm(m.name).includes(nterm));
-      }
+      match = MEDICATIONS_MOCK.find((m) => m.barcode === term);
+    } else if (term.length >= 4) {
+      const nterm = norm(term);
+      match = MEDICATIONS_MOCK.find((m) => norm(m.name).includes(nterm));
     }
 
-    // 3) Aplica o resultado
     if (match) {
       this.addMedication(match.barcode, match.name);
     } else {
-      // Se quiser NÃO adicionar "não encontrada" quando for < 4 letras,
-      // basta trocar a condição abaixo:
-      // if (/^\d+$/.test(term)) { this.addMedication(term, 'Medicação não encontrada'); }
       this.addMedication(term, 'Medicação não encontrada');
     }
 
@@ -303,33 +237,22 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     this.focusInput();
   }
 
-  onOpenCamera(): void {
-    const simulatedCode = '123'; // aqui seria substituído por leitura real da câmera
-    this.onScan(simulatedCode);
-  }
-
   cancelAllFromBarcode(barcode: string): void {
     this.medications.update((arr) => arr.filter((m) => m.barcode !== barcode));
     this.focusInput();
   }
 
-  cancelAll(): void {
-    this.medications.set([]);
-    this.focusInput();
+  hasUnidentifiedMedication(): boolean {
+    return this.medications().some((m) => m.name === 'Medicação não encontrada');
   }
 
   private fetchMedicationName(barcode: string) {
-    const found = this.medicationsMock.find((m) => m.barcode === barcode);
+    const found = MEDICATIONS_MOCK.find((m) => m.barcode === barcode);
     const name = found ? found.name : 'Medicação não encontrada';
     return of(name).pipe(delay(300));
   }
 
-  private focusInput(): void {
-    setTimeout(() => this.barcodeInputRef?.nativeElement?.focus(), 0);
-  }
-
-  barcodeBuffer: string = '';
-  scanTimeout: any;
+  // Keyboard simulation ----------------------------------------
 
   handleKey(event: KeyboardEvent): void {
     const key = event.key;
@@ -341,52 +264,18 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       this.barcodeBuffer = '';
 
       if (scanned) {
-        console.log('Simulação de leitura:', scanned);
-        this.onScan(scanned); // como se fosse o leitor
+        this.onScan(scanned);
       }
     } else if (key.length === 1) {
       this.barcodeBuffer += key;
 
-      // Se o Enter não vier, zera o buffer após 1s
       this.scanTimeout = setTimeout(() => {
         this.barcodeBuffer = '';
       }, 1000);
     }
   }
 
-  // Form de novo produto
-  showNewProductForm = false;
-  newProduct: MedicationItem = {
-    barcode: '',
-    name: '',
-    quantity: 0,
-    observation: '',
-  };
-  newProductErrors = {
-    name: false,
-    barcode: false,
-    barcodeExists: false,
-    nameExists: false,
-  };
-  canSaveNewProduct = false;
-
-  // Controle de exibição do diálogo de seleção de produto
-  productSelectVisible = false;
-
-  // Armazena a referência da medicação "não encontrada" que o usuário está corrigindo
-  productToResolve: MedicationItem | null = null;
-
-  // Controle de busca no diálogo
-  productSearch = '';
-
-  // Produto atualmente selecionado na tabela do diálogo
-  selectedProduct: MedicationItem | null = null;
-
-  // Lista completa de produtos disponíveis (vinda do mock ou da API)
-  allProducts: MedicationItem[] = this.medicationsMock;
-
-  // Lista filtrada para exibir no diálogo (inicia igual à completa)
-  filteredProducts: MedicationItem[] = [...this.medicationsMock];
+  // Manual selection & creation --------------------------------
 
   openManualSelection(medication: MedicationItem): void {
     this.productToResolve = medication;
@@ -396,7 +285,6 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     this.productSelectVisible = true;
     this.showNewProductForm = false;
     this.resetNewProduct();
-
     setTimeout(() => this.searchProductsInput?.nativeElement?.focus(), 300);
   }
 
@@ -404,11 +292,8 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     this.showNewProductForm = open;
     if (open) {
       this.resetNewProduct();
-      // opcional: focar no campo de nome
       setTimeout(() => {
-        const el = document.getElementById(
-          'newProdName'
-        ) as HTMLInputElement | null;
+        const el = document.getElementById('newProdName') as HTMLInputElement | null;
         el?.focus();
       }, 0);
     } else {
@@ -432,18 +317,15 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     const nameOk = nameNorm.length >= 4;
 
     const bc = (this.newProduct.barcode || '').trim();
-    const barcodeExists =
-      !!bc && this.allProducts.some((p) => p.barcode === bc);
+    const barcodeExists = !!bc && this.allProducts.some((p) => p.barcode === bc);
 
     const nameExists =
-      !!nameNorm &&
-      this.allProducts.some((p) => this.normalize(p.name) === nameNorm);
+      !!nameNorm && this.allProducts.some((p) => this.normalize(p.name) === nameNorm);
 
     this.newProductErrors.name = !nameOk;
     this.newProductErrors.barcodeExists = barcodeExists;
     this.newProductErrors.nameExists = nameExists;
 
-    // Continua permitindo salvar mesmo se o nome existir (soft warning)
     this.canSaveNewProduct = nameOk && !barcodeExists;
   }
 
@@ -463,7 +345,6 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     let chosen: MedicationItem | null = null;
 
     if (existingByBarcode) {
-      // 1) Se o código já existe, reaproveita sempre
       chosen = existingByBarcode;
     } else if (existingByName) {
       this.confirmationService.confirm({
@@ -477,12 +358,10 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
         acceptLabel: 'Usar existente',
         accept: () => {
           this.selectedProduct = existingByName;
-          this.confirmSelectProduct(); // mantém o merge por barcode
+          this.confirmSelectProduct();
           this.toggleNewProduct(false);
         },
         reject: () => {
-          // Criar novo e usar
-          const bc = (this.newProduct.barcode || '').trim();
           const barcodeToUse = bc || `MAN-${Date.now()}`;
           const created: MedicationItem = {
             barcode: barcodeToUse,
@@ -498,11 +377,10 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
         },
       });
 
-      return; // importante: aguarda a escolha no diálogo
+      return;
     }
 
     if (!chosen) {
-      // 3) Criar novo
       const barcodeToUse = bc || `MAN-${Date.now()}`;
       const created: MedicationItem = {
         barcode: barcodeToUse,
@@ -515,16 +393,12 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       chosen = created;
     }
 
-    // Usa o escolhido e confirma (com merge por barcode naquele método)
     this.selectedProduct = chosen;
     this.confirmSelectProduct();
-
-    // Limpa/fecha form
     this.toggleNewProduct(false);
   }
 
   goToSearchExisting(): void {
-    // Prioriza pesquisar por código se informado; caso contrário, usa o nome
     const bc = (this.newProduct.barcode || '').trim();
     const name = (this.newProduct.name || '').trim();
 
@@ -532,10 +406,9 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     if (!query) return;
 
     this.productSearch = query;
-    this.filterProducts(); // já atualiza a tabela
-    this.showNewProductForm = false; // recolhe o mini-form
+    this.filterProducts();
+    this.showNewProductForm = false;
 
-    // foca no input de busca para permitir Enter imediato
     setTimeout(() => this.searchProductsInput?.nativeElement?.focus(), 0);
   }
 
@@ -544,14 +417,6 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       this.selectedProduct = this.filteredProducts[0];
       this.confirmSelectProduct();
     }
-  }
-
-  private normalize(txt: string): string {
-    return txt
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .toLowerCase()
-      .trim();
   }
 
   filterProducts(): void {
@@ -563,12 +428,10 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
     }
 
     if (/^\d+$/.test(q)) {
-      // busca por código exato
       this.filteredProducts = this.allProducts.filter(
         (p) => this.normalize(p.barcode) === q
       );
     } else {
-      // busca por nome (2+ caracteres no diálogo para ser responsivo)
       if (q.length < 2) {
         this.filteredProducts = [...this.allProducts];
         this.selectedProduct = null;
@@ -597,41 +460,38 @@ export class ProductWithdrawal implements AfterViewInit, OnInit {
       if (idx === -1) return [...arr];
 
       const chosen = this.selectedProduct!;
-
-      // Procura outra linha com o mesmo barcode escolhido (diferente da linha atual)
       const existingIdx = arr.findIndex(
         (m, i) => m.barcode === chosen.barcode && i !== idx
       );
 
       if (existingIdx >= 0) {
-        // 🔁 Já existe um item com esse barcode: MERGE
-        arr[existingIdx].quantity += arr[idx].quantity; // soma as quantidades
-        // Opcional: você pode limpar observação da linha existente, se quiser
-        // (arr[existingIdx] as any).observacao = '';
-        // (arr[existingIdx] as any).observation = '';
-
-        // Remove a linha "não encontrada" (a que estava sendo corrigida)
+        arr[existingIdx].quantity += arr[idx].quantity;
         arr.splice(idx, 1);
       } else {
-        // 🪄 Não existe duplicado: apenas substitui código e nome mantendo a quantidade da linha
         arr[idx] = {
           ...arr[idx],
           barcode: chosen.barcode,
           name: chosen.name,
-          // Opcional: limpar observação se desejar
-          // observation: '',
-          // (arr[idx] as any).observacao = '';
         };
       }
 
       return [...arr];
     });
 
-    // Fecha diálogo e limpa estados
     this.productSelectVisible = false;
     this.productToResolve = null;
     this.selectedProduct = null;
 
     this.focusInput();
+  }
+
+  // Helpers ----------------------------------------------------
+
+  private normalize(txt: string): string {
+    return txt
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .trim();
   }
 }
