@@ -21,6 +21,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { ToastModule } from 'primeng/toast';
 import { RippleModule } from 'primeng/ripple';
 import { Product, ProductService } from './product.service';
+import { CommonComponentsModule } from '../../../../shared/common-components-module';
 
 interface Column {
   field: string;
@@ -50,25 +51,7 @@ const UNIT_OPTIONS = [
   selector: 'app-crud',
   standalone: true,
   imports: [
-    CommonModule,
-    TableModule,
-    FormsModule,
-    ButtonModule,
-    RippleModule,
-    ToastModule,
-    ToolbarModule,
-    RatingModule,
-    InputTextModule,
-    TextareaModule,
-    SelectModule,
-    RadioButtonModule,
-    InputNumberModule,
-    DialogModule,
-    TagModule,
-    InputIconModule,
-    IconFieldModule,
-    ConfirmDialogModule,
-    DatePicker
+    CommonComponentsModule
   ],
   templateUrl: './crud.html',
   providers: [MessageService, ProductService, ConfirmationService],

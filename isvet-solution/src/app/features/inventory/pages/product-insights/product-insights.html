@@ -1,0 +1,613 @@
+<div class="space-y-4">
+  <!-- KPIs coloridos -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <!-- Expiring soon -->
+    <p-card
+      class="kpi-card kpi-warning"
+      [ngClass]="{ 'kpi-active': activeKpiFilter === 'expiringSoon' }"
+      (click)="toggleKpiFilter('expiringSoon')"
+      [ngStyle]="{ cursor: 'pointer' }"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm/5 opacity-90">
+            Vencendo ≤ {{ expiringWithinDays }} dias
+          </div>
+          <div class="text-3xl font-semibold mt-1">{{ kpiExpiringSoon() }}</div>
+        </div>
+        <i class="pi pi-clock text-2xl kpi-icon"></i>
+      </div>
+    </p-card>
+
+    <!-- Expired -->
+    <p-card
+      class="kpi-card kpi-danger"
+      [ngClass]="{ 'kpi-active': activeKpiFilter === 'expired' }"
+      (click)="toggleKpiFilter('expired')"
+      [ngStyle]="{ cursor: 'pointer' }"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm/5 opacity-90">Vencidos</div>
+          <div class="text-3xl font-semibold mt-1">{{ kpiExpired() }}</div>
+        </div>
+        <i class="pi pi-times-circle text-2xl kpi-icon"></i>
+      </div>
+    </p-card>
+
+    <!-- Below min -->
+    <p-card
+      class="kpi-card kpi-accent"
+      [ngClass]="{ 'kpi-active': activeKpiFilter === 'belowMin' }"
+      (click)="toggleKpiFilter('belowMin')"
+      [ngStyle]="{ cursor: 'pointer' }"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm/5 opacity-90">Abaixo do mínimo</div>
+          <div class="text-3xl font-semibold mt-1">{{ kpiBelowMin() }}</div>
+        </div>
+        <i class="pi pi-arrow-down text-2xl kpi-icon"></i>
+      </div>
+    </p-card>
+
+    <!-- No movement -->
+    <p-card
+      class="kpi-card kpi-neutral"
+      [ngClass]="{ 'kpi-active': activeKpiFilter === 'noMovement' }"
+      (click)="toggleKpiFilter('noMovement')"
+      [ngStyle]="{ cursor: 'pointer' }"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm/5 opacity-90">Sem movimento (≥ 60d)</div>
+          <div class="text-3xl font-semibold mt-1">{{ kpiNoMovement() }}</div>
+        </div>
+        <i class="pi pi-history text-2xl kpi-icon"></i>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Filtros -->
+  <p-card>
+    <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-end">
+      <p-floatlabel class="w-full lg:w-72" variant="on">
+        <input pInputText id="q" class="w-full" [(ngModel)]="search" />
+        <label for="q">Buscar por nome ou código</label>
+      </p-floatlabel>
+
+      <p-floatlabel class="w-full lg:w-72" variant="on">
+        <p-multiselect
+          [options]="categoryOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedCategories"
+          display="chip"
+          [filter]="true"
+          class="w-full"
+          selectedItemsLabel="{0} categorias selecionadas"
+        ></p-multiselect>
+        <label>Categorias</label>
+      </p-floatlabel>
+
+      <p-floatlabel class="w-full lg:w-56" variant="on">
+        <p-select
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="statusFilter"
+          class="w-full"
+        ></p-select>
+        <label>Status</label>
+      </p-floatlabel>
+
+      <span class="flex-1"></span>
+
+      <div class="flex gap-2">
+        <button
+          pButton
+          label="Limpar"
+          class="p-button-secondary"
+          (click)="clearFilters()"
+        ></button>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Tabela -->
+  <p-card>
+    <p-table
+      [value]="filteredRows"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [rowHover]="true"
+      [tableStyle]="{ 'min-width': '60rem' }"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 28%">Produto</th>
+          <th style="width: 12%">Código</th>
+          <th style="width: 10%">Categoria</th>
+          <th style="width: 10%">Status</th>
+          <th style="width: 10%">Quantidade</th>
+          <th style="width: 15%">Validade Próx.</th>
+          <th style="width: 15%">Últ. Movim.</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-row>
+        <tr (click)="openDetails(row)" style="cursor: pointer">
+          <td class="font-medium">{{ row.product.name }}</td>
+          <td>{{ row.product.barcode }}</td>
+          <td>{{ row.product.category }}</td>
+          <td>
+            <p-tag
+              [value]="row.product.active ? 'Ativo' : 'Inativo'"
+              [severity]="row.product.active ? 'success' : 'warning'"
+            ></p-tag>
+          </td>
+          <td>
+            <span
+              [class.text-red-600]="row.belowMin"
+              [class.font-semibold]="row.belowMin"
+              >{{ row.totalQty }}</span
+            >
+          </td>
+          <td>
+            @if (row.nearestExpiry) {
+            <span
+              [class.text-red-600]="row.expired"
+              [class.text-orange-500]="row.expiringSoon && !row.expired"
+            >
+              {{ row.nearestExpiry }}
+            </span>
+            } @else { <span class="opacity-50">—</span> }
+          </td>
+          <td>{{ row.lastMovementAt || "—" }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="7" class="text-center py-6">Nenhum item encontrado.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
+
+<!-- Drawer de Detalhe -->
+<p-drawer
+  [(visible)]="detailVisible"
+  [fullScreen]="true"
+  [styleClass]="'product-details-drawer'"
+  [closable]="false"
+>
+  @if (selectedRow) {
+  <!-- Header custom dentro do conteúdo -->
+  <ng-template #header>
+    <div class="flex items-start justify-between w-full">
+      <div>
+        <h2 class="text-2xl font-semibold leading-tight">
+          {{ selectedRow.product.name }}
+        </h2>
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          pButton
+          icon="pi pi-list-check"
+          class="p-button p-button-outlined"
+          label="Logs & Auditoria"
+          (click)="openAuditDrawer()"
+        ></button>
+
+        <button pButton label="Editar" icon="pi pi-pencil"></button>
+        <button
+          pButton
+          label="Fechar"
+          class="p-button-secondary"
+          icon="pi pi-times"
+          (click)="closeDetails()"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- GRID DE CARDS -->
+  <div class="detail-grid">
+    <!-- 1) Informações gerais -->
+    <p-card>
+      <ng-template #title>Informações gerais</ng-template>
+      <div class="kv">
+        <div class="kv-row">
+          <span>Nome</span><strong>{{ selectedRow.product.name }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Código</span><strong>{{ selectedRow.product.id }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Código de barras</span
+          ><strong>{{ selectedRow.product.barcode }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Unidade</span><strong>{{ selectedRow.product.unit }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Marca</span
+          ><strong>{{ selectedRow.product.manufacturer || "—" }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Categoria</span
+          ><strong>{{ selectedRow.product.category }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Status</span
+          ><p-tag
+            [value]="selectedRow.product.active ? 'Ativo' : 'Inativo'"
+            [severity]="selectedRow.product.active ? 'success' : 'warning'"
+          ></p-tag>
+        </div>
+        <div class="kv-row">
+          <span>Cadastrado em</span
+          ><strong>{{
+            selectedRow.product.createdAt | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Atualizado em</span
+          ><strong>{{
+            selectedRow.product.updatedAt | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- 3) Estoque -->
+    <p-card>
+      <ng-template #title>Estoque</ng-template>
+      <div class="kv">
+        <div class="kv-row">
+          <span>Estoque atual</span><strong>{{ selectedRow.totalQty }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Estoque mínimo</span
+          ><strong>{{ selectedRow.product.minStock }}</strong>
+        </div>
+
+        <div class="kv-row">
+          <span>Validade + próxima</span
+          ><strong>{{
+            selectedRow.nearestExpiry || "—" | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Situação</span>
+          <strong>
+            @if (selectedRow.belowMin) {
+            <p-tag value="Abaixo do mínimo" severity="warn" /> } @else if
+            (selectedRow.expired) {
+            <p-tag value="Vencido" severity="danger" /> } @else if
+            (selectedRow.expiringSoon) {
+            <p-tag value="Vencendo" severity="warning" /> } @else {
+            <p-tag value="OK" severity="success" /> }
+          </strong>
+        </div>
+        <div class="kv-row">
+          <span>Ideal</span><strong>{{ stockSummary.ideal }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Excedente</span><strong>{{ stockSummary.excess }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Duração estimada</span
+          ><strong>{{ stockSummary.estimatedDurationDays }} dias</strong>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- 4) Validade -->
+    <p-card>
+      <ng-template #title>Validade</ng-template>
+      <div class="kv">
+        <div class="kv-row">
+          <span>Mais antiga</span
+          ><strong>{{
+            selectedRow.nearestExpiry || "—" | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Lotes ativos</span
+          ><strong>{{ batchesByProduct.length }}</strong>
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <p-table
+        [value]="batchesByProduct"
+        [rows]="5"
+        [paginator]="batchesByProduct.length > 5"
+      >
+        <ng-template #header>
+          <tr>
+            <th>Lote</th>
+            <th>Validade</th>
+            <th>Quantidade</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-b>
+          <tr>
+            <td>{{ b.lot }}</td>
+            <td>{{ b.expiresAt | date : "dd/MM/yyyy" }}</td>
+            <td>{{ b.quantity }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="3" class="text-center py-4">Sem lotes cadastrados.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- 7) Saídas (histórico resumido) -->
+    <p-card>
+      <ng-template #title>Saídas</ng-template>
+      <p-table [value]="outgoSummary" [rows]="3">
+        <ng-template #header>
+          <tr>
+            <th>Mês</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-r>
+          <tr>
+            <td>{{ r.month }}</td>
+            <td class="text-right">{{ r.total }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="4" class="text-center py-4">
+              Sem saídas nos últimos meses.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- 8) Entradas (histórico) -->
+    <p-card>
+      <ng-template #title>Entradas</ng-template>
+      <div class="text-sm opacity-80 mb-2">
+        {{ inboundSummary.length ? "" : "Nenhuma entrada nos últimos 3 meses" }}
+      </div>
+      <p-table [value]="inboundSummary" [rows]="3">
+        <ng-template #header>
+          <tr>
+            <th>Data</th>
+            <th>Lote</th>
+            <th class="text-right">Qtd</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-r>
+          <tr>
+            <td>{{ r.date }}</td>
+            <td>{{ r.lot }}</td>
+            <td class="text-right">{{ r.qty }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="3" class="text-center py-4">Sem entradas recentes.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+  }
+</p-drawer>
+
+<!-- Drawer secundário: Logs & Auditoria (abre sobre o drawer principal) -->
+<p-drawer
+  [(visible)]="auditVisible"
+  [position]="'right'"
+  [modal]="true"
+  [dismissible]="true"
+  [blockScroll]="true"
+  styleClass="!w-full md:!w-80 lg:!w-[70rem]"
+  [closable]="true"
+>
+  <!-- Header custom do drawer de auditoria -->
+  <ng-template #header>
+    <div class="flex items-center justify-between w-full">
+      <h3 class="m-0 font-semibold text-base md:text-lg">Logs & Auditoria</h3>
+      <div class="flex gap-2">
+        <p-button
+          icon="pi pi-download"
+          class="p-button-sm p-button-text"
+          (click)="exportAuditCsv()"
+          pTooltip="Exportar CSV"
+          variant="text"
+        ></p-button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Filtros -->
+  <!-- <div class="flex flex-col md:flex-row gap-2 items-start md:items-end mb-3">
+    <p-floatlabel>
+      <p-datepicker
+        [(ngModel)]="auditFrom"
+        dateFormat="dd/mm/yy"
+        iconDisplay="input"
+        showIcon="true"
+        class="w-full"
+      ></p-datepicker>
+      <label for="over_label">de</label>
+    </p-floatlabel>
+
+    <p-floatlabel>
+      <p-datepicker
+        [(ngModel)]="auditTo"
+        dateFormat="dd/mm/yy"
+        iconDisplay="input"
+        showIcon="true"
+        class="w-full"
+      ></p-datepicker>
+      <label for="over_label">até</label>
+    </p-floatlabel>
+
+    <span class="p-float-label w-64">
+      <p-multiselect
+        [options]="auditActionOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="auditActions"
+        display="chip"
+        [filter]="true"
+        [showToggleAll]="true"
+        placeholder="Ações"
+        selectedItemsLabel="{0} ações"
+      ></p-multiselect>
+      <label>Ações</label>
+    </span>
+
+    <span class="p-float-label">
+      <input
+        pInputText
+        [(ngModel)]="auditActor"
+        placeholder="Usuário (ID ou nome)"
+      />
+      <label>Usuário</label>
+    </span>
+
+    <span class="flex-1"></span>
+
+    <div class="flex gap-2">
+      <button
+        pButton
+        label="Filtrar"
+        icon="pi pi-filter"
+        (click)="auditPage = 1; loadAudit()"
+      ></button>
+      <button
+        pButton
+        label="Limpar"
+        class="p-button-secondary"
+        (click)="resetAuditFilters()"
+      ></button>
+    </div>
+  </div> -->
+
+  <div
+    class="flex flex-col lg:flex-row gap-3 items-start lg:items-end mt-3 mb-6"
+  >
+    <p-floatlabel class="w-full lg:w-36" variant="on">
+      <p-datepicker
+        [(ngModel)]="auditFrom"
+        dateFormat="dd/mm/yy"
+        iconDisplay="input"
+        showIcon="true"
+        class="w-full"
+      ></p-datepicker>
+      <label for="over_label">De</label>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full lg:w-36" variant="on">
+      <p-datepicker
+        [(ngModel)]="auditTo"
+        dateFormat="dd/mm/yy"
+        iconDisplay="input"
+        showIcon="true"
+        class="w-full"
+      ></p-datepicker>
+      <label for="over_label">Até</label>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full lg:w-70" variant="on">
+      <input
+        pInputText
+        [(ngModel)]="auditActor"
+        class="w-full"
+      />
+      <label>Funcionário</label>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full lg:w-65" variant="on">
+      <p-multiselect
+        [options]="auditActionOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="auditActions"
+        display="chip"
+        [filter]="true"
+        selectedItemsLabel="{0} ações"
+        class="w-full"
+      ></p-multiselect>
+      <label>Ações</label>
+    </p-floatlabel>
+
+    <div class="flex gap-2">
+    <button
+        pButton
+        label="Filtrar"
+        icon="pi pi-filter"
+        (click)="auditPage = 1; loadAudit()"
+      ></button>
+      <button
+        pButton
+        label="Limpar"
+        class="p-button-secondary"
+        (click)="resetAuditFilters()"
+      ></button>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <p-table
+    [value]="auditRows"
+    [paginator]="true"
+    [rows]="auditPageSize"
+    [totalRecords]="auditTotal"
+    [lazy]="true"
+    [loading]="auditLoading"
+    (onPage)="onAuditPageChange($event)"
+    [tableStyle]="{ 'min-width': '52rem' }"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="width: 12rem">Data</th>
+        <th style="width: 10rem">Ação</th>
+        <th>Usuário</th>
+        <th style="width: 8rem" class="text-right">Qtd</th>
+        <th style="width: 10rem">Lote</th>
+        <th>Obs</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-log>
+      <tr>
+        <td>{{ log.occurredAt | date : "dd/MM/yyyy HH:mm" }}</td>
+        <td>
+          <p-tag
+            [value]="auditLabel(log.action)"
+            [severity]="auditSeverity(log.action)"
+          ></p-tag>
+        </td>
+        <td>{{ log.actorName }} ({{ log.actorId }})</td>
+        <td class="text-right">{{ log.qty ?? "—" }}</td>
+        <td>{{ log.batch || "—" }}</td>
+        <td>{{ log.note || "—" }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="text-center py-4">
+          Sem registros para os filtros informados.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-drawer>

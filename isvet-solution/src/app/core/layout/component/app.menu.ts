@@ -26,85 +26,157 @@ export class AppMenu {
 
   ngOnInit() {
     this.model = [
-  {
-    label: '',
-    items: [
-      { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/dashboard'] },
-    ],
-  },
-  {
-    label: '',
-    items: [
       {
-        label: 'Prontuário',
-        icon: 'pi pi-fw pi-book',
+        label: '',
         items: [
-          { label: 'Histórico de Atendimentos', icon: 'pi pi-fw pi-calendar', routerLink: ['/prontuario/historico'] },
-          { label: 'Novo Atendimento', icon: 'pi pi-fw pi-plus-circle', routerLink: ['/prontuario/novo'] },
-          { label: 'Vacinas e Prescrições', icon: 'pi pi-fw pi-briefcase', routerLink: ['/prontuario/vacinas'] },
+          {
+            label: 'Dashboard',
+            icon: 'pi pi-fw pi-home',
+            routerLink: ['/dashboard'],
+          },
         ],
       },
-    ],
-  },
-  {
-    label: '',
-    items: [
       {
-        label: 'Cadastros',
-        icon: 'pi pi-fw pi-users',
+        label: '',
         items: [
-          { label: 'Animais', icon: 'animal', routerLink: ['/cadastros/animal'] },
-          { label: 'Tutores', icon: 'pi pi-fw pi-user', routerLink: ['/cadastros/tutor'] },
-          { label: 'Funcionários', icon: 'pi pi-fw pi-id-card', routerLink: ['/cadastros/funcionario'] },
-          { label: 'Fornecedores', icon: 'pi pi-fw pi-truck', routerLink: ['/cadastros/fornecedor'] },
+          {
+            label: 'Prontuário',
+            icon: 'pi pi-fw pi-book',
+            items: [
+              {
+                label: 'Histórico de Atendimentos',
+                icon: 'pi pi-fw pi-calendar',
+                routerLink: ['/prontuario/historico'],
+              },
+              {
+                label: 'Novo Atendimento',
+                icon: 'pi pi-fw pi-plus-circle',
+                routerLink: ['/prontuario/novo'],
+              },
+              {
+                label: 'Vacinas e Prescrições',
+                icon: 'pi pi-fw pi-briefcase',
+                routerLink: ['/prontuario/vacinas'],
+              },
+            ],
+          },
         ],
       },
-    ],
-  },
-  {
-    label: '',
-    items: [
       {
-        label: 'Estoque',
-        icon: 'pi pi-fw pi-box',
+        label: '',
         items: [
-          { label: 'Lista de Produtos', icon: 'pi pi-fw pi-table', routerLink: ['/estoque/listagem'] },
-          { label: 'Entrada de Produtos', icon: 'pi pi-fw pi-plus', routerLink: ['/estoque/entrada'] },
-          { label: 'Retirada de Produtos', icon: 'pi pi-fw pi-minus', routerLink: ['/estoque/retirada'] },
-          { label: 'Inventário', icon: 'pi pi-fw pi-clipboard', routerLink: ['/estoque/inventario'] },
+          {
+            label: 'Cadastros',
+            icon: 'pi pi-fw pi-users',
+            items: [
+              {
+                label: 'Animais',
+                icon: 'animal',
+                routerLink: ['/cadastros/animal'],
+              },
+              {
+                label: 'Tutores',
+                icon: 'pi pi-fw pi-user',
+                routerLink: ['/cadastros/tutor'],
+              },
+              {
+                label: 'Funcionários',
+                icon: 'pi pi-fw pi-id-card',
+                routerLink: ['/cadastros/funcionario'],
+              },
+              {
+                label: 'Fornecedores',
+                icon: 'pi pi-fw pi-truck',
+                routerLink: ['/cadastros/fornecedor'],
+              },
+            ],
+          },
         ],
       },
-    ],
-  },
-  {
-    label: '',
-    items: [
       {
-        label: 'Internações e Cirurgias',
-        icon: 'pi pi-fw pi-heart',
+        label: '',
         items: [
-          { label: 'Lista de Internações', icon: 'pi pi-fw pi-list', routerLink: ['/internacoes/listagem'] },
-          { label: 'Nova Internação', icon: 'pi pi-fw pi-plus-circle', routerLink: ['/internacoes/nova'] },
-          { label: 'Histórico do Animal', icon: 'pi pi-fw pi-clock', routerLink: ['/internacoes/historico'] },
-          { label: 'Cirurgias', icon: 'pi pi-fw pi-scissors', routerLink: ['/internacoes/cirurgias'] },
-        ],
-      },
-    ],
-  },
-  {
-    label: '',
-    items: [
-      {
-        label: 'Configurações',
-        icon: 'pi pi-fw pi-cog',
-        items: [
-          { label: 'Dados da Clínica', icon: 'pi pi-fw pi-building', routerLink: ['/configuracoes/clinica'] },
-          { label: 'Permissões', icon: 'pi pi-fw pi-lock', routerLink: ['/configuracoes/permissoes'] },
-        ],
-      },
-    ],
-  },
-];
+          {
+            label: 'Estoque',
+            icon: 'pi pi-fw pi-box',
+            items: [
+              {
+                label: 'Produtos & Insights',
+                icon: 'pi pi-fw pi-chart-line',
+                routerLink: ['/estoque/produto-insights'],
+              },
 
+              {
+                label: 'Cadastro de produtos',
+                icon: 'pi pi-fw pi-clipboard',
+                routerLink: ['/estoque/inventario'],
+              },
+              {
+                label: 'Entrada de Produtos',
+                icon: 'pi pi-fw pi-plus',
+                routerLink: ['/estoque/entrada'],
+              },
+              {
+                label: 'Retirada de Produtos',
+                icon: 'pi pi-fw pi-minus',
+                routerLink: ['/estoque/retirada'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        label: '',
+        items: [
+          {
+            label: 'Internações e Cirurgias',
+            icon: 'pi pi-fw pi-heart',
+            items: [
+              {
+                label: 'Lista de Internações',
+                icon: 'pi pi-fw pi-list',
+                routerLink: ['/internacoes/listagem'],
+              },
+              {
+                label: 'Nova Internação',
+                icon: 'pi pi-fw pi-plus-circle',
+                routerLink: ['/internacoes/nova'],
+              },
+              {
+                label: 'Histórico do Animal',
+                icon: 'pi pi-fw pi-clock',
+                routerLink: ['/internacoes/historico'],
+              },
+              {
+                label: 'Cirurgias',
+                icon: 'pi pi-fw pi-scissors',
+                routerLink: ['/internacoes/cirurgias'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        label: '',
+        items: [
+          {
+            label: 'Configurações',
+            icon: 'pi pi-fw pi-cog',
+            items: [
+              {
+                label: 'Dados da Clínica',
+                icon: 'pi pi-fw pi-building',
+                routerLink: ['/configuracoes/clinica'],
+              },
+              {
+                label: 'Permissões',
+                icon: 'pi pi-fw pi-lock',
+                routerLink: ['/configuracoes/permissoes'],
+              },
+            ],
+          },
+        ],
+      },
+    ];
   }
 }

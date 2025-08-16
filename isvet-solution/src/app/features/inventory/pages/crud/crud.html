@@ -19,111 +19,112 @@
 
   <ng-template #end>
     <p-button
-      label="Export"
-      icon="pi pi-upload"
-      severity="secondary"
-      (onClick)="exportCSV()"
-    />
+      icon="pi pi-download"
+      class="p-button-sm p-button-text"
+      (click)="exportCSV()"
+      pTooltip="Exportar CSV"
+      variant="outlined"
+    ></p-button>
   </ng-template>
 </p-toolbar>
 
-  <p-table
-    #dt
-    [value]="products()"
-    [rows]="10"
-    [columns]="cols"
-    [paginator]="true"
-    [globalFilterFields]="[
-      'barcode',
-      'name',
-      'description',
-      'manufacturer',
-      'batch'
-    ]"
-    [tableStyle]="{ 'min-width': '90rem' }"
-    [(selection)]="selectedProducts"
-    [rowHover]="true"
-    dataKey="id"
-    currentPageReportTemplate="Mostrando {first} até {last} de {totalRecords} medicamentos"
-    [showCurrentPageReport]="true"
-    [rowsPerPageOptions]="[10, 20, 30]"
-  >
-    <ng-template #caption>
-      <div class="flex items-center justify-between">
-        <h5 class="m-0">Estoque de Medicamentos</h5>
-        <p-iconfield>
-          <p-inputicon styleClass="pi pi-search" />
-          <input
-            pInputText
-            type="text"
-            (input)="onGlobalFilter(dt, $event)"
-            placeholder="Pesquisar..."
-          />
-        </p-iconfield>
-      </div>
-    </ng-template>
+<p-table
+  #dt
+  [value]="products()"
+  [rows]="10"
+  [columns]="cols"
+  [paginator]="true"
+  [globalFilterFields]="[
+    'barcode',
+    'name',
+    'description',
+    'manufacturer',
+    'batch'
+  ]"
+  [tableStyle]="{ 'min-width': '90rem' }"
+  [(selection)]="selectedProducts"
+  [rowHover]="true"
+  dataKey="id"
+  currentPageReportTemplate="Mostrando {first} até {last} de {totalRecords} medicamentos"
+  [showCurrentPageReport]="true"
+  [rowsPerPageOptions]="[10, 20, 30]"
+>
+  <ng-template #caption>
+    <div class="flex items-center justify-between">
+      <h5 class="m-0">Estoque de Medicamentos</h5>
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search" />
+        <input
+          pInputText
+          type="text"
+          (input)="onGlobalFilter(dt, $event)"
+          placeholder="Pesquisar..."
+        />
+      </p-iconfield>
+    </div>
+  </ng-template>
 
-    <ng-template #header>
-      <tr>
-        <th style="width: 3rem">
-          <p-tableHeaderCheckbox />
-        </th>
-        <th pSortableColumn="barcode">
-          Código de Barras <p-sortIcon field="barcode" />
-        </th>
-        <th pSortableColumn="name">Nome <p-sortIcon field="name" /></th>
-        <th pSortableColumn="manufacturer">
-          Fabricante <p-sortIcon field="manufacturer" />
-        </th>
-        <th pSortableColumn="batch">Lote <p-sortIcon field="batch" /></th>
-        <th pSortableColumn="expirationDate">
-          Validade <p-sortIcon field="expirationDate" />
-        </th>
-        <th pSortableColumn="stock">Estoque <p-sortIcon field="stock" /></th>
-        <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
-        <th style="min-width: 8rem">Ações</th>
-      </tr>
-    </ng-template>
+  <ng-template #header>
+    <tr>
+      <th style="width: 3rem">
+        <p-tableHeaderCheckbox />
+      </th>
+      <th pSortableColumn="barcode">
+        Código de Barras <p-sortIcon field="barcode" />
+      </th>
+      <th pSortableColumn="name">Nome <p-sortIcon field="name" /></th>
+      <th pSortableColumn="manufacturer">
+        Fabricante <p-sortIcon field="manufacturer" />
+      </th>
+      <th pSortableColumn="batch">Lote <p-sortIcon field="batch" /></th>
+      <th pSortableColumn="expirationDate">
+        Validade <p-sortIcon field="expirationDate" />
+      </th>
+      <th pSortableColumn="stock">Estoque <p-sortIcon field="stock" /></th>
+      <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+      <th style="min-width: 8rem">Ações</th>
+    </tr>
+  </ng-template>
 
-    <ng-template #body let-product>
-      <tr>
-        <td>
-          <p-tableCheckbox [value]="product" />
-        </td>
-        <td>{{ product.barcode }}</td>
-        <td>{{ product.name }}</td>
-        <td>{{ product.manufacturer }}</td>
-        <td>{{ product.batch }}</td>
-        <td>{{ product.expirationDate | date : "dd/MM/yyyy" }}</td>
-        <td>{{ product.stock }}</td>
-        <td>
-          <p-tag
-            [value]="product.status"
-            [severity]="getSeverity(product.status)"
-          ></p-tag>
-        </td>
-        <td>
-          <p-button
-            icon="pi pi-pencil"
-            class="mr-2"
-            title="Editar produto"
-            severity="secondary"
-            [rounded]="true"
-            [outlined]="true"
-            (click)="editProduct(product)"
-          />
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            title="Remover"
-            [rounded]="true"
-            [outlined]="true"
-            (click)="deleteProduct(product)"
-          />
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <ng-template #body let-product>
+    <tr>
+      <td>
+        <p-tableCheckbox [value]="product" />
+      </td>
+      <td>{{ product.barcode }}</td>
+      <td>{{ product.name }}</td>
+      <td>{{ product.manufacturer }}</td>
+      <td>{{ product.batch }}</td>
+      <td>{{ product.expirationDate | date : "dd/MM/yyyy" }}</td>
+      <td>{{ product.stock }}</td>
+      <td>
+        <p-tag
+          [value]="product.status"
+          [severity]="getSeverity(product.status)"
+        ></p-tag>
+      </td>
+      <td>
+        <p-button
+          icon="pi pi-pencil"
+          class="mr-2"
+          title="Editar produto"
+          severity="secondary"
+          [rounded]="true"
+          [outlined]="true"
+          (click)="editProduct(product)"
+        />
+        <p-button
+          icon="pi pi-trash"
+          severity="danger"
+          title="Remover"
+          [rounded]="true"
+          [outlined]="true"
+          (click)="deleteProduct(product)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
 
 <p-dialog
   [(visible)]="productDialog"

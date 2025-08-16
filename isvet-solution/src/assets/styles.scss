@@ -5,3 +5,37 @@
 @use './demo/demo.scss';
 @use 'variables';
 @use 'mixins';
+
+.product-details-drawer {
+  background: var(--surface-ground) !important;
+}
+
+.product-details-drawer .p-drawer-content {
+  padding: 1rem 1.25rem;
+}
+
+/* Header compacto (MOBILE) */
+.product-details-drawer .p-drawer-header {
+  padding: 0.4rem 0.8rem;
+  min-height: 36px;
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-card);
+}
+
+.product-details-drawer .p-drawer-header h2 {
+  margin: 0;
+  font-size: 1.35em;
+  line-height: 1.2;
+}
+
+/* Header normal (DESKTOP) */
+@media (min-width: 769px) {
+  .product-details-drawer .p-drawer-header {
+    padding: 0.8rem 1.2rem;
+    min-height: 48px;
+  }
+
+  .product-details-drawer .p-drawer-header h2 {
+    font-size: 1.7em;
+  }
+}
