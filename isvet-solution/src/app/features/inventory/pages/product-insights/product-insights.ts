@@ -462,154 +462,284 @@ export class ProductInsights {
   auditVisible = false;
 
   // === Opções de filtro (labels) ===
-auditActionOptions = [
-  { label: 'Cadastro', value: 'PRODUCT_CREATED' as AuditAction },
-  { label: 'Edição',   value: 'PRODUCT_UPDATED' as AuditAction },
-  { label: 'Entrada',  value: 'STOCK_IN'        as AuditAction },
-  { label: 'Retirada', value: 'STOCK_OUT'       as AuditAction },
-  { label: 'Ajuste',   value: 'STOCK_ADJUST'    as AuditAction },
-];
+  auditActionOptions = [
+    { label: 'Cadastro', value: 'PRODUCT_CREATED' as AuditAction },
+    { label: 'Edição', value: 'PRODUCT_UPDATED' as AuditAction },
+    { label: 'Entrada', value: 'STOCK_IN' as AuditAction },
+    { label: 'Retirada', value: 'STOCK_OUT' as AuditAction },
+    { label: 'Ajuste', value: 'STOCK_ADJUST' as AuditAction },
+  ];
 
-// === Estado de filtros/paginação ===
-auditFrom?: Date;
-auditTo?: Date;
-auditActions: AuditAction[] = [];
-auditActor = '';
-auditPage = 1;
-auditPageSize = 10;
-auditLoading = false;
+  // === Estado de filtros/paginação ===
+  auditFrom?: Date;
+  auditTo?: Date;
+  auditActions: AuditAction[] = [];
+  auditActor = '';
+  auditPage = 1;
+  auditPageSize = 10;
+  auditLoading = false;
 
-// === Dados de tabela (paginados) ===
-auditRows: AuditLogEntry[] = [];
-auditTotal = 0;
+  // === Dados de tabela (paginados) ===
+  auditRows: AuditLogEntry[] = [];
+  auditTotal = 0;
 
-// === MOCK: base com alguns registros por productId ===
-private auditAllMock: AuditLogEntry[] = [
-  // p1
-  { id:'1', productId:'p1', action:'PRODUCT_CREATED', actorId:'u1', actorName:'Admin', occurredAt:'2025-01-10T09:12:00Z', note:'Cadastro inicial' },
-  { id:'2', productId:'p1', action:'STOCK_IN', qty:50, batch:'L-A', actorId:'u2', actorName:'João', occurredAt:'2025-07-20T13:00:00Z' },
-  { id:'3', productId:'p1', action:'STOCK_OUT', qty:8, actorId:'u3', actorName:'Maria', occurredAt:'2025-08-10T10:30:00Z', note:'Atendimento #123' },
-  { id:'4', productId:'p1', action:'PRODUCT_UPDATED', actorId:'u1', actorName:'Admin', occurredAt:'2025-08-01T16:45:00Z', note:'Atualização de cadastro' },
+  // === MOCK: base com alguns registros por productId ===
+  private auditAllMock: AuditLogEntry[] = [
+    // p1
+    {
+      id: '1',
+      productId: 'p1',
+      action: 'PRODUCT_CREATED',
+      actorId: 'u1',
+      actorName: 'Admin',
+      occurredAt: '2025-01-10T09:12:00Z',
+      note: 'Cadastro inicial',
+    },
+    {
+      id: '2',
+      productId: 'p1',
+      action: 'STOCK_IN',
+      qty: 50,
+      batch: 'L-A',
+      actorId: 'u2',
+      actorName: 'João',
+      occurredAt: '2025-07-20T13:00:00Z',
+    },
+    {
+      id: '3',
+      productId: 'p1',
+      action: 'STOCK_OUT',
+      qty: 8,
+      actorId: 'u3',
+      actorName: 'Maria',
+      occurredAt: '2025-08-10T10:30:00Z',
+      note: 'Atendimento #123',
+    },
+    {
+      id: '4',
+      productId: 'p1',
+      action: 'PRODUCT_UPDATED',
+      actorId: 'u1',
+      actorName: 'Admin',
+      occurredAt: '2025-08-01T16:45:00Z',
+      note: 'Atualização de cadastro',
+    },
 
-  // p2
-  { id:'5', productId:'p2', action:'STOCK_OUT', qty:5, actorId:'u4', actorName:'Carlos', occurredAt:'2025-05-01T11:20:00Z' },
-  { id:'6', productId:'p2', action:'STOCK_IN', qty:4, batch:'L-D', actorId:'u2', actorName:'João', occurredAt:'2025-07-02T15:10:00Z' },
+    // p2
+    {
+      id: '5',
+      productId: 'p2',
+      action: 'STOCK_OUT',
+      qty: 5,
+      actorId: 'u4',
+      actorName: 'Carlos',
+      occurredAt: '2025-05-01T11:20:00Z',
+    },
+    {
+      id: '6',
+      productId: 'p2',
+      action: 'STOCK_IN',
+      qty: 4,
+      batch: 'L-D',
+      actorId: 'u2',
+      actorName: 'João',
+      occurredAt: '2025-07-02T15:10:00Z',
+    },
 
-  // p3
-  { id:'7', productId:'p3', action:'STOCK_IN', qty:6, batch:'L-E', actorId:'u2', actorName:'João', occurredAt:'2025-06-22T09:00:00Z' },
-];
+    // p3
+    {
+      id: '7',
+      productId: 'p3',
+      action: 'STOCK_IN',
+      qty: 6,
+      batch: 'L-E',
+      actorId: 'u2',
+      actorName: 'João',
+      occurredAt: '2025-06-22T09:00:00Z',
+    },
+  ];
 
-// === Helpers de rótulo/severidade para o <p-tag> ===
-auditLabel(a: AuditAction): string {
-  switch (a) {
-    case 'PRODUCT_CREATED': return 'Cadastro';
-    case 'PRODUCT_UPDATED': return 'Edição';
-    case 'STOCK_IN':        return 'Entrada';
-    case 'STOCK_OUT':       return 'Retirada';
-    case 'STOCK_ADJUST':    return 'Ajuste';
+  // === Helpers de rótulo/severidade para o <p-tag> ===
+  auditLabel(a: AuditAction): string {
+    switch (a) {
+      case 'PRODUCT_CREATED':
+        return 'Cadastro';
+      case 'PRODUCT_UPDATED':
+        return 'Edição';
+      case 'STOCK_IN':
+        return 'Entrada';
+      case 'STOCK_OUT':
+        return 'Retirada';
+      case 'STOCK_ADJUST':
+        return 'Ajuste';
+    }
   }
-}
-auditSeverity(a: AuditAction): 'success' | 'warning' | 'danger' | 'info' | 'secondary' {
-  switch (a) {
-    case 'PRODUCT_CREATED': return 'success';
-    case 'PRODUCT_UPDATED': return 'info';
-    case 'STOCK_IN':        return 'success';
-    case 'STOCK_OUT':       return 'warning';
-    case 'STOCK_ADJUST':    return 'secondary';
+  auditSeverity(
+    a: AuditAction
+  ): 'success' | 'warning' | 'danger' | 'info' | 'secondary' {
+    switch (a) {
+      case 'PRODUCT_CREATED':
+        return 'success';
+      case 'PRODUCT_UPDATED':
+        return 'info';
+      case 'STOCK_IN':
+        return 'success';
+      case 'STOCK_OUT':
+        return 'warning';
+      case 'STOCK_ADJUST':
+        return 'secondary';
+    }
   }
-}
 
-// === Carregar (filtrar em memória) ===
-loadAudit(): void {
-  if (!this.selectedRow) { this.auditRows = []; this.auditTotal = 0; return; }
+  // === Carregar (filtrar em memória) ===
+  loadAudit(): void {
+    if (!this.selectedRow) {
+      this.auditRows = [];
+      this.auditTotal = 0;
+      return;
+    }
 
-  this.auditLoading = true;
-  const pid = this.selectedRow.product.id;
+    this.auditLoading = true;
+    const pid = this.selectedRow.product.id;
 
-  // 1) base por produto
-  let items = this.auditAllMock.filter(x => x.productId === pid);
+    // 1) base por produto
+    let items = this.auditAllMock.filter((x) => x.productId === pid);
 
-  // 2) filtros
-  if (this.auditFrom) {
-    const from = this.auditFrom.setHours(0,0,0,0);
-    items = items.filter(x => new Date(x.occurredAt).getTime() >= from);
-  }
-  if (this.auditTo) {
-    const to = this.auditTo.setHours(23,59,59,999);
-    items = items.filter(x => new Date(x.occurredAt).getTime() <= to);
-  }
-  if (this.auditActions.length) {
-    const set = new Set(this.auditActions);
-    items = items.filter(x => set.has(x.action));
-  }
-  if (this.auditActor.trim()) {
-    const q = this.auditActor.trim().toLowerCase();
-    items = items.filter(x =>
-      x.actorName.toLowerCase().includes(q) || x.actorId.toLowerCase().includes(q)
+    // 2) filtros
+    if (this.auditFrom) {
+      const from = this.auditFrom.setHours(0, 0, 0, 0);
+      items = items.filter((x) => new Date(x.occurredAt).getTime() >= from);
+    }
+    if (this.auditTo) {
+      const to = this.auditTo.setHours(23, 59, 59, 999);
+      items = items.filter((x) => new Date(x.occurredAt).getTime() <= to);
+    }
+    if (this.auditActions.length) {
+      const set = new Set(this.auditActions);
+      items = items.filter((x) => set.has(x.action));
+    }
+    if (this.auditActor.trim()) {
+      const q = this.auditActor.trim().toLowerCase();
+      items = items.filter(
+        (x) =>
+          x.actorName.toLowerCase().includes(q) ||
+          x.actorId.toLowerCase().includes(q)
+      );
+    }
+
+    // 3) ordenação (recente primeiro)
+    items.sort(
+      (a, b) =>
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
     );
+
+    // 4) paginação em memória
+    this.auditTotal = items.length;
+    const start = (this.auditPage - 1) * this.auditPageSize;
+    this.auditRows = items.slice(start, start + this.auditPageSize);
+
+    this.auditLoading = false;
   }
 
-  // 3) ordenação (recente primeiro)
-  items.sort((a,b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
+  resetAuditFilters(): void {
+    this.auditFrom = undefined;
+    this.auditTo = undefined;
+    this.auditActions = [];
+    this.auditActor = '';
+    this.auditPage = 1;
+    this.loadAudit();
+  }
 
-  // 4) paginação em memória
-  this.auditTotal = items.length;
-  const start = (this.auditPage - 1) * this.auditPageSize;
-  this.auditRows = items.slice(start, start + this.auditPageSize);
+  onAuditPageChange(ev: any): void {
+    // PrimeNG Table onPage: {first, rows, page} (page é zero-based)
+    this.auditPage = (ev?.page ?? 0) + 1;
+    this.auditPageSize = ev?.rows ?? this.auditPageSize;
+    this.loadAudit();
+  }
 
-  this.auditLoading = false;
-}
+  // === Exportar CSV (em memória) ===
+  exportAuditCsv(): void {
+    const rows = this.auditRows;
+    const header = ['Data', 'Ação', 'Usuário', 'Qtd', 'Lote', 'Obs'];
+    const lines = rows.map((r) => [
+      new Date(r.occurredAt).toLocaleString('pt-BR'),
+      this.auditLabel(r.action),
+      `${r.actorName} (${r.actorId})`,
+      r.qty ?? '',
+      r.batch ?? '',
+      (r.note ?? '').replace(/\n/g, ' '),
+    ]);
+    const csv = [header, ...lines]
+      .map((cols) =>
+        cols.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')
+      )
+      .join('\n');
 
-resetAuditFilters(): void {
-  this.auditFrom = undefined;
-  this.auditTo = undefined;
-  this.auditActions = [];
-  this.auditActor = '';
-  this.auditPage = 1;
-  this.loadAudit();
-}
-
-onAuditPageChange(ev: any): void {
-  // PrimeNG Table onPage: {first, rows, page} (page é zero-based)
-  this.auditPage = (ev?.page ?? 0) + 1;
-  this.auditPageSize = ev?.rows ?? this.auditPageSize;
-  this.loadAudit();
-}
-
-// === Exportar CSV (em memória) ===
-exportAuditCsv(): void {
-  const rows = this.auditRows;
-  const header = ['Data', 'Ação', 'Usuário', 'Qtd', 'Lote', 'Obs'];
-  const lines = rows.map(r => [
-    new Date(r.occurredAt).toLocaleString('pt-BR'),
-    this.auditLabel(r.action),
-    `${r.actorName} (${r.actorId})`,
-    r.qty ?? '',
-    r.batch ?? '',
-    (r.note ?? '').replace(/\n/g, ' ')
-  ]);
-  const csv = [header, ...lines]
-    .map(cols => cols.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
-    .join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `auditoria-${this.selectedRow?.product.name || 'produto'}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auditoria-${this.selectedRow?.product.name || 'produto'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   openAuditDrawer(): void {
     if (!this.selectedRow) return;
     this.auditVisible = true;
     // reseta paginação e carrega
     this.auditPage = 1;
-    this.loadAudit();
+    // this.loadAudit();
   }
 
   closeAuditDrawer(): void {
     this.auditVisible = false;
+  }
+
+  get filteredAuditRows(): AuditLogEntry[] {
+    if (!this.selectedRow) return [];
+
+    const pid = this.selectedRow.product.id;
+    let items = this.auditAllMock.filter((x) => x.productId === pid);
+
+    // período
+    if (this.auditFrom) {
+      const from = new Date(this.auditFrom);
+      from.setHours(0, 0, 0, 0);
+      items = items.filter(
+        (x) => new Date(x.occurredAt).getTime() >= from.getTime()
+      );
+    }
+    if (this.auditTo) {
+      const to = new Date(this.auditTo);
+      to.setHours(23, 59, 59, 999);
+      items = items.filter(
+        (x) => new Date(x.occurredAt).getTime() <= to.getTime()
+      );
+    }
+
+    // ações
+    if (this.auditActions?.length) {
+      const set = new Set(this.auditActions);
+      items = items.filter((x) => set.has(x.action));
+    }
+
+    // usuário (id ou nome)
+    const q = this.auditActor.trim().toLowerCase();
+    if (q) {
+      items = items.filter(
+        (x) =>
+          x.actorName.toLowerCase().includes(q) ||
+          x.actorId.toLowerCase().includes(q)
+      );
+    }
+
+    // ordena: mais recentes primeiro
+    items.sort(
+      (a, b) =>
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+    );
+
+    return items;
   }
 }

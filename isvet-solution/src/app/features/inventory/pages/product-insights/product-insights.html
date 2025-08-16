@@ -526,11 +526,7 @@
     </p-floatlabel>
 
     <p-floatlabel class="w-full lg:w-70" variant="on">
-      <input
-        pInputText
-        [(ngModel)]="auditActor"
-        class="w-full"
-      />
+      <input pInputText [(ngModel)]="auditActor" class="w-full" />
       <label>Funcionário</label>
     </p-floatlabel>
 
@@ -549,12 +545,12 @@
     </p-floatlabel>
 
     <div class="flex gap-2">
-    <button
+      <!-- <button
         pButton
         label="Filtrar"
         icon="pi pi-filter"
         (click)="auditPage = 1; loadAudit()"
-      ></button>
+      ></button> -->
       <button
         pButton
         label="Limpar"
@@ -565,7 +561,7 @@
   </div>
 
   <!-- Tabela -->
-  <p-table
+  <!-- <p-table
     [value]="auditRows"
     [paginator]="true"
     [rows]="auditPageSize"
@@ -573,6 +569,49 @@
     [lazy]="true"
     [loading]="auditLoading"
     (onPage)="onAuditPageChange($event)"
+    [tableStyle]="{ 'min-width': '52rem' }"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="width: 12rem">Data</th>
+        <th style="width: 10rem">Ação</th>
+        <th>Usuário</th>
+        <th style="width: 8rem" class="text-right">Qtd</th>
+        <th style="width: 10rem">Lote</th>
+        <th>Obs</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-log>
+      <tr>
+        <td>{{ log.occurredAt | date : "dd/MM/yyyy HH:mm" }}</td>
+        <td>
+          <p-tag
+            [value]="auditLabel(log.action)"
+            [severity]="auditSeverity(log.action)"
+          ></p-tag>
+        </td>
+        <td>{{ log.actorName }} ({{ log.actorId }})</td>
+        <td class="text-right">{{ log.qty ?? "—" }}</td>
+        <td>{{ log.batch || "—" }}</td>
+        <td>{{ log.note || "—" }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="text-center py-4">
+          Sem registros para os filtros informados.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table> -->
+  <p-table
+    [value]="filteredAuditRows"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[10, 20, 50]"
+    [rowHover]="true"
     [tableStyle]="{ 'min-width': '52rem' }"
   >
     <ng-template #header>
