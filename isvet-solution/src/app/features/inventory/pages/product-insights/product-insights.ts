@@ -18,6 +18,7 @@ interface Product {
   minStock: number;
   active: boolean;
   manufacturer?: string;
+  description?: string;
   createdAt: string; // ISO
   updatedAt: string; // ISO
 }
@@ -67,6 +68,31 @@ interface AuditLogEntry {
   occurredAt: string; // ISO
   note?: string;
 }
+
+// Modelo simples do formulário (mock)
+type ProductForm = {
+  id: string;
+  name: string;
+  barcode: string;
+  unit: string | null;
+  manufacturer: string;
+  category: string | null;
+  active: boolean;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  description: string;
+
+  currentQty: number;
+  minStock: number;
+  nearestExpiry: Date | null;
+
+  idealStock: number | null;
+  excessStock: number | null;
+  estimatedDurationDays: number | null;
+};
+
+// Lotes do formulário
+type LotRow = { lot: string; expiresAt: Date | null; quantity: number };
 
 @Component({
   selector: 'app-catalog-insights',
@@ -741,5 +767,140 @@ export class ProductInsights {
     );
 
     return items;
+  }
+
+  // CONTROLE DO DRAWER DE FORM
+  productFormVisible = false;
+  isEditing = false;
+
+  // Estado do formulário
+  formProduct: ProductForm = this.blankProduct();
+  lotRows: LotRow[] = [];
+
+  // opções
+  unitOptions = [
+    { label: 'Comprimido', value: 'cp' },
+    { label: 'mL', value: 'ml' },
+    { label: 'mg', value: 'mg' },
+    { label: 'g', value: 'g' },
+    { label: 'unidade', value: 'un' },
+  ];
+
+  // categoryOptions = [
+  //   { label: 'Analgésicos', value: 'Analgésicos' },
+  //   { label: 'Antibióticos', value: 'Antibióticos' },
+  //   { label: 'Anti-inflamatórios', value: 'Anti-inflamatórios' },
+  //   { label: 'Antiparasitários', value: 'Antiparasitários' },
+  // ];
+
+  // Helpers
+  private blankProduct(): ProductForm {
+    return {
+      id: '',
+      name: '',
+      barcode: '',
+      unit: null,
+      manufacturer: '',
+      category: null,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      description: '',
+
+      currentQty: 0,
+      minStock: 0,
+      nearestExpiry: null,
+
+      idealStock: null,
+      excessStock: null,
+      estimatedDurationDays: null,
+    };
+  }
+
+  // Abrir para criar
+  openCreateProduct(): void {
+    this.isEditing = false;
+    this.formProduct = this.blankProduct();
+    this.lotRows = [];
+    this.productFormVisible = true;
+  }
+
+  // Abrir para editar a partir da linha da tabela
+  openEditProduct(row: InventoryRow): void {
+    this.isEditing = true;
+
+    // Mapear do seu modelo atual para o form (mock)
+    this.formProduct = {
+      id: row.product.id,
+      name: row.product.name,
+      barcode: row.product.barcode,
+      unit: row.product.unit ?? null,
+      manufacturer: row.product.manufacturer ?? '',
+      category: row.product.category ?? null,
+      active: !!row.product.active,
+      createdAt: row.product.createdAt
+        ? new Date(row.product.createdAt)
+        : new Date(),
+      updatedAt: row.product.updatedAt
+        ? new Date(row.product.updatedAt)
+        : new Date(),
+      description: row.product.description ?? '',
+      currentQty: row.totalQty ?? 0,
+      minStock: row.product.minStock ?? 0,
+      nearestExpiry: row.nearestExpiry ? new Date(row.nearestExpiry) : null,
+
+      idealStock: null,
+      excessStock: null,
+      estimatedDurationDays: null,
+    };
+
+    // lotes do produto selecionado (mock da sua fonte batchesByProduct)
+    this.lotRows = this.batchesByProduct.map((b) => ({
+      lot: b.lot,
+      expiresAt: b.expiresAt ? new Date(b.expiresAt) : null,
+      quantity: b.quantity ?? 0,
+    }));
+
+    this.productFormVisible = true;
+  }
+
+  // Validar (regras mínimas)
+  productFormValid(): boolean {
+    const f = this.formProduct;
+    return !!f.name && f.name.trim().length >= 3 && f.minStock >= 0;
+  }
+
+  // Salvar (mock)
+  saveProduct(): void {
+    if (!this.productFormValid()) return;
+
+    const payload = {
+      ...this.formProduct,
+      lots: this.lotRows,
+    };
+
+    // Aqui, faria POST/PUT; por enquanto só loga
+    console.log('Salvar produto', payload);
+
+    // Feedback simples e fechar
+    // (pode usar Toast do PrimeNG se preferir)
+    alert(this.isEditing ? 'Produto atualizado!' : 'Produto cadastrado!');
+    this.productFormVisible = false;
+
+    // TODO: atualizar a tabela local (rows) se quiser ver o efeito imediato
+  }
+
+  // Cancelar
+  cancelProductForm(): void {
+    this.productFormVisible = false;
+  }
+
+  // Lotes
+  addLotRow(): void {
+    this.lotRows = [...this.lotRows, { lot: '', expiresAt: null, quantity: 0 }];
+  }
+
+  removeLotRow(i: number): void {
+    this.lotRows = this.lotRows.filter((_, idx) => idx !== i);
   }
 }

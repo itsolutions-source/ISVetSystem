@@ -39,3 +39,20 @@
     font-size: 1.7em;
   }
 }
+
+
+/* styles.scss */
+.product-form-drawer {
+  background: var(--surface-ground) !important;
+}
+
+.product-form-drawer .p-drawer-content {
+  padding: 1rem 1.25rem;
+}
+
+.product-form-drawer .p-drawer-header {
+  padding: .6rem 1rem;
+  min-height: 44px;
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-card);
+}

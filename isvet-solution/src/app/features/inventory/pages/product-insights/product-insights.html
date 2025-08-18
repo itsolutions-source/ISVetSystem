@@ -1,6 +1,6 @@
 <div class="space-y-4">
   <!-- KPIs coloridos -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+  <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
     <!-- Expiring soon -->
     <p-card
       class="kpi-card kpi-warning"
@@ -110,6 +110,14 @@
           class="p-button-secondary"
           (click)="clearFilters()"
         ></button>
+
+        <p-button
+          label="Cadastrar"
+          icon="pi pi-plus"
+          severity="primary"
+          class="mr-2"
+          (click)="openCreateProduct()"
+        />
       </div>
     </div>
   </p-card>
@@ -203,7 +211,7 @@
           (click)="openAuditDrawer()"
         ></button>
 
-        <button pButton label="Editar" icon="pi pi-pencil"></button>
+        <button pButton label="Editar" icon="pi pi-pencil" (click)="openEditProduct(selectedRow)"></button>
         <button
           pButton
           label="Fechar"
@@ -434,72 +442,6 @@
     </div>
   </ng-template>
 
-  <!-- Filtros -->
-  <!-- <div class="flex flex-col md:flex-row gap-2 items-start md:items-end mb-3">
-    <p-floatlabel>
-      <p-datepicker
-        [(ngModel)]="auditFrom"
-        dateFormat="dd/mm/yy"
-        iconDisplay="input"
-        showIcon="true"
-        class="w-full"
-      ></p-datepicker>
-      <label for="over_label">de</label>
-    </p-floatlabel>
-
-    <p-floatlabel>
-      <p-datepicker
-        [(ngModel)]="auditTo"
-        dateFormat="dd/mm/yy"
-        iconDisplay="input"
-        showIcon="true"
-        class="w-full"
-      ></p-datepicker>
-      <label for="over_label">até</label>
-    </p-floatlabel>
-
-    <span class="p-float-label w-64">
-      <p-multiselect
-        [options]="auditActionOptions"
-        optionLabel="label"
-        optionValue="value"
-        [(ngModel)]="auditActions"
-        display="chip"
-        [filter]="true"
-        [showToggleAll]="true"
-        placeholder="Ações"
-        selectedItemsLabel="{0} ações"
-      ></p-multiselect>
-      <label>Ações</label>
-    </span>
-
-    <span class="p-float-label">
-      <input
-        pInputText
-        [(ngModel)]="auditActor"
-        placeholder="Usuário (ID ou nome)"
-      />
-      <label>Usuário</label>
-    </span>
-
-    <span class="flex-1"></span>
-
-    <div class="flex gap-2">
-      <button
-        pButton
-        label="Filtrar"
-        icon="pi pi-filter"
-        (click)="auditPage = 1; loadAudit()"
-      ></button>
-      <button
-        pButton
-        label="Limpar"
-        class="p-button-secondary"
-        (click)="resetAuditFilters()"
-      ></button>
-    </div>
-  </div> -->
-
   <div
     class="flex flex-col lg:flex-row gap-3 items-start lg:items-end mt-3 mb-6"
   >
@@ -649,4 +591,237 @@
       </tr>
     </ng-template>
   </p-table>
+</p-drawer>
+
+<!-- Drawer Editar/Novo produto -->
+
+<p-drawer
+  [(visible)]="productFormVisible"
+  [position]="'right'"
+  styleClass="!w-full lg:!w-[50rem]"
+  [closable]="false"
+>
+  <!-- HEADER -->
+  <ng-template #header>
+    <div class="flex items-center justify-between w-full">
+      <h2 class="m-0 font-semibold text-lg md:text-xl">
+        {{ isEditing ? "Editar produto" : "Novo produto" }}
+      </h2>
+      <div class="flex gap-2">
+        <button
+          pButton
+          label="Cancelar"
+          class="p-button-secondary p-button-sm"
+          icon="pi pi-times"
+          (click)="cancelProductForm()"
+        ></button>
+        <button
+          pButton
+          label="Salvar"
+          icon="pi pi-check"
+          class="p-button-sm"
+          [disabled]="!productFormValid()"
+          (click)="saveProduct()"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- FORM em card único -->
+  <form #prodForm="ngForm" (ngSubmit)="saveProduct()" class="p-4">
+    <!-- 1) Informações gerais -->
+    <div class="flex justify-between">
+      <h3 class="text-lg font-semibold">Informações gerais</h3>
+      <div class="flex items-center gap-2">
+        <p-toggleswitch
+          name="active"
+          [(ngModel)]="formProduct.active"
+        ></p-toggleswitch>
+        <span>Ativo</span>
+      </div>
+    </div>
+
+    <div class="grid gap-6 mt-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <p-floatlabel variant="on">
+          <input
+            pInputText
+            id="pf_name"
+            name="name"
+            [(ngModel)]="formProduct.name"
+            required
+            minlength="3"
+            class="w-full"
+          />
+          <label for="pf_name">Nome*</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+          <input
+            pInputText
+            id="pf_barcode"
+            name="barcode"
+            [(ngModel)]="formProduct.barcode"
+            class="w-full"
+          />
+          <label for="pf_barcode">Código de barras</label>
+        </p-floatlabel>
+      </div>
+      <p-floatlabel variant="on">
+        <textarea
+          pTextarea
+          id="pf_description"
+          name="description"
+          [(ngModel)]="formProduct.description"
+          rows="3"
+          class="w-full"
+        ></textarea>
+        <label for="pf_name">Descrição</label>
+      </p-floatlabel>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <p-floatlabel variant="on">
+          <p-select
+            id="pf_unit"
+            name="unit"
+            [options]="unitOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="formProduct.unit"
+            class="w-full"
+          />
+          <label for="pf_unit">Unidade</label>
+        </p-floatlabel>
+
+        <p-floatlabel variant="on">
+          <p-select
+            id="pf_category"
+            name="category"
+            [options]="categoryOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="formProduct.category"
+            class="w-full"
+          />
+          <label for="pf_category">Categoria</label>
+        </p-floatlabel>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <p-floatlabel variant="on">
+          <input
+            pInputText
+            id="pf_brand"
+            name="manufacturer"
+            [(ngModel)]="formProduct.manufacturer"
+            class="w-full"
+          />
+          <label for="pf_brand">Marca/Fabricante</label>
+        </p-floatlabel>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- 2) Estoque -->
+    <h3 class="text-lg font-semibold">Estoque</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8">
+      <p-floatlabel variant="on">
+        <p-inputnumber
+          inputId="pf_qty"
+          name="currentQty"
+          [(ngModel)]="formProduct.currentQty"
+          [min]="0"
+          [showButtons]="true"
+          class="w-full"
+        />
+        <label for="pf_qty">Estoque atual</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <p-inputnumber
+          inputId="pf_min"
+          name="minStock"
+          [(ngModel)]="formProduct.minStock"
+          [min]="0"
+          [showButtons]="true"
+          class="w-full"
+          required
+        />
+        <label for="pf_min">Estoque mínimo*</label>
+      </p-floatlabel>
+    </div>
+
+    <p-divider />
+
+    <!-- 3) Validade / Lotes -->
+    <h3 class="text-lg font-semibold mb-2">Validade / Lotes</h3>
+    <div class="flex justify-end mb-2">
+      <button
+        pButton
+        icon="pi pi-plus"
+        label="Adicionar lote"
+        (click)="addLotRow()"
+      ></button>
+    </div>
+
+    <p-table [value]="lotRows" [tableStyle]="{ 'min-width': '30rem' }">
+      <ng-template #header>
+        <tr>
+          <th style="width: 25%">Lote</th>
+          <th style="width: 25%">Validade</th>
+          <th style="width: 15%">Quantidade</th>
+          <th style="width: 20%"></th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-r let-i="rowIndex">
+        <tr>
+          <td>
+            <input
+              pInputText
+              [(ngModel)]="r.lot"
+              name="lot_{{ i }}"
+              placeholder="Ex.: L-123"
+              class="w-full"
+            />
+          </td>
+          <td style="z-index: 10000">
+            <p-datepicker
+              [(ngModel)]="r.expiresAt"
+              dateFormat="dd/mm/yy"
+              iconDisplay="input"
+              showIcon="true"
+              class="w-full"
+            ></p-datepicker>
+          </td>
+          <td>
+            <p-inputnumber
+              [(ngModel)]="r.quantity"
+              name="qty_{{ i }}"
+              [min]="0"
+              [showButtons]="true"
+              [inputStyle]="{
+                    width:'5rem',
+                  }"
+            ></p-inputnumber>
+          </td>
+          <td class="text-right">
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-danger p-button-outlined"
+              (click)="removeLotRow(i)"
+              type="button"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="4" class="text-center py-4">Nenhum lote adicionado.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </form>
 </p-drawer>
