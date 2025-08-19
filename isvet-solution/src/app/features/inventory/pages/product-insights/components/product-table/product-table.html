@@ -49,14 +49,14 @@
                   [class.text-red-600]="row.expired"
                   [class.text-orange-500]="row.expiringSoon && !row.expired"
                 >
-                  {{ row.nearestExpiry }}
+                  {{ row.nearestExpiry | date : "dd/MM/yyyy" }}
                 </span>
               } @else {
                 <span class="opacity-50">—</span>
               }
             </td>
 
-            <td>{{ row.lastMovementAt || '—' }}</td>
+            <td>{{ row.lastMovementAt | date : "dd/MM/yyyy" }}</td>
           </tr>
         </ng-template>
 

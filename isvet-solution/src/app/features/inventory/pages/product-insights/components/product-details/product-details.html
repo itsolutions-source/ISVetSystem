@@ -94,7 +94,8 @@
       <ng-template #title>Estoque</ng-template>
       <div class="kv">
         <div class="kv-row">
-          <span>Estoque atual</span><strong>{{ selectedRow()!.totalQty }}</strong>
+          <span>Estoque atual</span
+          ><strong>{{ selectedRow()!.totalQty }}</strong>
         </div>
         <div class="kv-row">
           <span>Estoque mínimo</span
@@ -217,7 +218,7 @@
         </ng-template>
         <ng-template #body let-r>
           <tr>
-            <td>{{ r.date }}</td>
+            <td>{{ r.date | date : "dd/MM/yyyy" }}</td>
             <td>{{ r.lot }}</td>
             <td class="text-right">{{ r.qty }}</td>
           </tr>
