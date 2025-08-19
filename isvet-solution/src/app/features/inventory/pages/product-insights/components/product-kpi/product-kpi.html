@@ -2,7 +2,7 @@
   <p-card
     class="kpi-card kpi-warning"
     [ngClass]="{ 'kpi-active': active() === 'expiringSoon' }"
-    (click)="select.emit('expiringSoon')"
+    (click)="toggleKpiFilter('expiringSoon')"
     [ngStyle]="{ cursor: 'pointer' }"
   >
     <div class="flex items-center justify-between">
@@ -21,7 +21,7 @@
   <p-card
     class="kpi-card kpi-danger"
     [ngClass]="{ 'kpi-active': active() === 'expired' }"
-    (click)="select.emit('expired')"
+    (click)="toggleKpiFilter('expired')"
     [ngStyle]="{ cursor: 'pointer' }"
   >
     <div class="flex items-center justify-between">
@@ -36,7 +36,7 @@
   <p-card
     class="kpi-card kpi-accent"
     [ngClass]="{ 'kpi-active': active() === 'belowMin' }"
-    (click)="select.emit('belowMin')"
+    (click)="toggleKpiFilter('belowMin')"
     [ngStyle]="{ cursor: 'pointer' }"
   >
     <div class="flex items-center justify-between">
@@ -51,7 +51,7 @@
   <p-card
     class="kpi-card kpi-neutral"
     [ngClass]="{ 'kpi-active': active() === 'noMovement' }"
-    (click)="select.emit('noMovement')"
+    (click)="toggleKpiFilter('noMovement')"
     [ngStyle]="{ cursor: 'pointer' }"
   >
     <div class="flex items-center justify-between">

@@ -19,4 +19,12 @@ export class ProductKpi {
   active = input<KpiFilter | null>(null);
 
   select = output<KpiFilter | null>();
+  activeKpiFilter: any;
+  
+  toggleKpiFilter(
+    kind: 'expiringSoon' | 'expired' | 'belowMin' | 'noMovement'
+  ) {
+    this.activeKpiFilter = this.active() === kind ? null : kind; // clique novamente para limpar
+    this.select.emit(this.activeKpiFilter);
+  }
 }
