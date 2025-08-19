@@ -1,8 +1,9 @@
+// product-insights.ts
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject
+  inject,
 } from '@angular/core';
 import { CommonComponentsModule } from '@shared/common-components-module';
 import { addDays, normalize } from '@shared/utils/utils';
@@ -19,7 +20,7 @@ import {
   InventoryRow,
   KpiCounts,
   LotRow,
-  ProductForm
+  ProductForm,
 } from './models/product.model';
 
 @Component({
@@ -41,6 +42,7 @@ import {
 export class ProductInsights {
   private readonly fac = inject(InventoryFacade);
 
+  // --- Filtros / Lista ---
   activeKpiFilter:
     | 'expiringSoon'
     | 'expired'
@@ -54,20 +56,46 @@ export class ProductInsights {
   onlyBelowMin = false;
   expiringWithinDays = 30;
 
-  get categoryOptions() {
-    const set = new Set(this.fac.products().map((p) => p.category));
-    return Array.from(set)
-      .sort()
-      .map((c) => ({ label: c, value: c }));
-  }
   statusOptions = [
     { label: 'Todos', value: 'todos' },
     { label: 'Ativos', value: 'ativos' },
     { label: 'Inativos', value: 'inativos' },
   ];
 
+  // --- Detalhe ---
+  detailVisible = false;
+  selectedRow: InventoryRow | null = null;
+
+  // --- Auditoria ---
+  auditVisible = false;
+  auditActionOptions = [
+    { label: 'Cadastro', value: 'PRODUCT_CREATED' as AuditAction },
+    { label: 'Edição', value: 'PRODUCT_UPDATED' as AuditAction },
+    { label: 'Entrada', value: 'STOCK_IN' as AuditAction },
+    { label: 'Retirada', value: 'STOCK_OUT' as AuditAction },
+    { label: 'Ajuste', value: 'STOCK_ADJUST' as AuditAction },
+  ];
+  auditFrom?: Date;
+  auditTo?: Date;
+  auditActions: AuditAction[] = [];
+  auditActor = '';
+
+  // --- CRUD ---
+  productFormVisible = false;
+  isEditing = false;
+  formProduct: ProductForm = this.blankProduct();
+  lotRows: LotRow[] = [];
+  unitOptions = [
+    { label: 'Comprimido', value: 'cp' },
+    { label: 'mL', value: 'ml' },
+    { label: 'mg', value: 'mg' },
+    { label: 'g', value: 'g' },
+    { label: 'unidade', value: 'un' },
+  ];
+
   readonly rows = this.fac.rows;
 
+  // --- KPIs (readonly) ---
   readonly kpiExpired = computed(
     () => this.rows().filter((r) => r.expired).length
   );
@@ -83,13 +111,20 @@ export class ProductInsights {
       (r) => !r.lastMovementAt || new Date(r.lastMovementAt) < cutoff
     ).length;
   });
-
   readonly kpi = computed<KpiCounts>(() => ({
     expired: this.kpiExpired(),
     expiringSoon: this.kpiExpiringSoon(),
     belowMin: this.kpiBelowMin(),
     noMovement: this.kpiNoMovement(),
   }));
+
+  // --- Filtros / Lista ---
+  get categoryOptions() {
+    const set = new Set(this.fac.products().map((p) => p.category));
+    return Array.from(set)
+      .sort()
+      .map((c) => ({ label: c, value: c }));
+  }
 
   get filteredRows(): InventoryRow[] {
     const q = normalize(this.search);
@@ -129,8 +164,14 @@ export class ProductInsights {
     }
   }
 
-  detailVisible = false;
-  selectedRow: InventoryRow | null = null;
+  clearFilters() {
+    this.search = '';
+    this.selectedCategories = [];
+    this.statusFilter = 'todos';
+    this.onlyBelowMin = false;
+  }
+
+  // --- Detalhe ---
   openDetails(row: InventoryRow) {
     this.selectedRow = row;
     this.detailVisible = true;
@@ -138,13 +179,6 @@ export class ProductInsights {
   closeDetails() {
     this.detailVisible = false;
     this.selectedRow = null;
-  }
-
-  clearFilters() {
-    this.search = '';
-    this.selectedCategories = [];
-    this.statusFilter = 'todos';
-    this.onlyBelowMin = false;
   }
 
   get batchesByProduct() {
@@ -176,20 +210,7 @@ export class ProductInsights {
     return [{ date: '2025-06-22', lot: 'L-E', qty: 6 }];
   }
 
-  // ===== Audit Drawer =====
-  auditVisible = false;
-  auditActionOptions = [
-    { label: 'Cadastro', value: 'PRODUCT_CREATED' as AuditAction },
-    { label: 'Edição', value: 'PRODUCT_UPDATED' as AuditAction },
-    { label: 'Entrada', value: 'STOCK_IN' as AuditAction },
-    { label: 'Retirada', value: 'STOCK_OUT' as AuditAction },
-    { label: 'Ajuste', value: 'STOCK_ADJUST' as AuditAction },
-  ];
-  auditFrom?: Date;
-  auditTo?: Date;
-  auditActions: AuditAction[] = [];
-  auditActor = '';
-
+  // --- Auditoria ---
   openAuditDrawer() {
     if (this.selectedRow) this.auditVisible = true;
   }
@@ -268,40 +289,9 @@ export class ProductInsights {
     URL.revokeObjectURL(url);
   }
 
-  productFormVisible = false;
-  isEditing = false;
-  formProduct: ProductForm = this.blankProduct();
-  lotRows: LotRow[] = [];
-  unitOptions = [
-    { label: 'Comprimido', value: 'cp' },
-    { label: 'mL', value: 'ml' },
-    { label: 'mg', value: 'mg' },
-    { label: 'g', value: 'g' },
-    { label: 'unidade', value: 'un' },
-  ];
+  // --- CRUD ---
   get categoryOptionsCrud() {
     return this.categoryOptions;
-  }
-
-  private blankProduct(): ProductForm {
-    return {
-      id: '',
-      name: '',
-      barcode: '',
-      unit: null,
-      manufacturer: '',
-      category: null,
-      active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      description: '',
-      currentQty: 0,
-      minStock: 0,
-      nearestExpiry: null,
-      idealStock: null,
-      excessStock: null,
-      estimatedDurationDays: null,
-    };
   }
 
   openCreateProduct() {
@@ -310,6 +300,7 @@ export class ProductInsights {
     this.lotRows = [];
     this.productFormVisible = true;
   }
+
   openEditProduct(row: InventoryRow) {
     this.isEditing = true;
     this.formProduct = {
@@ -347,7 +338,30 @@ export class ProductInsights {
     alert(this.isEditing ? 'Produto atualizado!' : 'Produto cadastrado!');
     this.productFormVisible = false;
   }
+
   cancelProductForm() {
     this.productFormVisible = false;
+  }
+
+  // --- CRUD ---
+  private blankProduct(): ProductForm {
+    return {
+      id: '',
+      name: '',
+      barcode: '',
+      unit: null,
+      manufacturer: '',
+      category: null,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      description: '',
+      currentQty: 0,
+      minStock: 0,
+      nearestExpiry: null,
+      idealStock: null,
+      excessStock: null,
+      estimatedDurationDays: null,
+    };
   }
 }
