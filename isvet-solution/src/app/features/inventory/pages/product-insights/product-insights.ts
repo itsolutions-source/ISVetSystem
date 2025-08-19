@@ -1,29 +1,26 @@
-// product-insights.ts
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
-  signal,
+  inject
 } from '@angular/core';
 import { CommonComponentsModule } from '@shared/common-components-module';
+import { addDays, normalize } from '@shared/utils/utils';
 import { ProductCrud } from './components/product-crud/product-crud';
 import { ProductDetails } from './components/product-details/product-details';
 import { ProductFilters } from './components/product-filter/product-filter';
 import { ProductKpi } from './components/product-kpi/product-kpi';
 import { ProductLogs } from './components/product-logs/product-logs';
 import { ProductTable } from './components/product-table/product-table';
+import { InventoryFacade } from './facade/product.facade';
 import {
   AuditAction,
   AuditLogEntry,
-  AuditSeverity,
   InventoryRow,
   KpiCounts,
   LotRow,
-  ProductForm,
+  ProductForm
 } from './models/product.model';
-import { InventoryFacade } from './facade/product.facade';
-import { addDays, normalize } from '@shared/utils/utils';
 
 @Component({
   selector: 'app-catalog-insights',
@@ -44,7 +41,6 @@ import { addDays, normalize } from '@shared/utils/utils';
 export class ProductInsights {
   private readonly fac = inject(InventoryFacade);
 
-  // ===== UI state =====
   activeKpiFilter:
     | 'expiringSoon'
     | 'expired'
@@ -52,14 +48,12 @@ export class ProductInsights {
     | 'noMovement'
     | null = null;
 
-  // filtros do list
   search = '';
   selectedCategories: string[] = [];
   statusFilter: 'todos' | 'ativos' | 'inativos' = 'todos';
   onlyBelowMin = false;
   expiringWithinDays = 30;
 
-  // opções do filtro
   get categoryOptions() {
     const set = new Set(this.fac.products().map((p) => p.category));
     return Array.from(set)
@@ -72,10 +66,8 @@ export class ProductInsights {
     { label: 'Inativos', value: 'inativos' },
   ];
 
-  // linhas base vindas da fachada
   readonly rows = this.fac.rows;
 
-  // ===== KPIs =====
   readonly kpiExpired = computed(
     () => this.rows().filter((r) => r.expired).length
   );
@@ -99,8 +91,6 @@ export class ProductInsights {
     noMovement: this.kpiNoMovement(),
   }));
 
-  // ===== filteredRows AGORA como computed =====
-  // ================= Filtradas (getter) =================
   get filteredRows(): InventoryRow[] {
     const q = normalize(this.search);
     const cats = this.selectedCategories;
@@ -139,7 +129,6 @@ export class ProductInsights {
     }
   }
 
-  // ===== Drawer detalhe =====
   detailVisible = false;
   selectedRow: InventoryRow | null = null;
   openDetails(row: InventoryRow) {
@@ -151,7 +140,6 @@ export class ProductInsights {
     this.selectedRow = null;
   }
 
-  // ===== Limpar filtros =====
   clearFilters() {
     this.search = '';
     this.selectedCategories = [];
@@ -159,7 +147,6 @@ export class ProductInsights {
     this.onlyBelowMin = false;
   }
 
-  // ===== Dados de detalhes (derivados rapidamente do estado atual) =====
   get batchesByProduct() {
     if (!this.selectedRow) return [];
     return this.fac
@@ -281,7 +268,6 @@ export class ProductInsights {
     URL.revokeObjectURL(url);
   }
 
-  // ===== CRUD Drawer =====
   productFormVisible = false;
   isEditing = false;
   formProduct: ProductForm = this.blankProduct();
@@ -356,9 +342,7 @@ export class ProductInsights {
     this.productFormVisible = true;
   }
 
-  // ✅ agora o handler do (save) recebe o payload do filho
   saveProduct(ev: { product: ProductForm; lots: LotRow[] }) {
-    // Você pode validar/converter e chamar a fachada:
     this.fac.saveProductMock(ev);
     alert(this.isEditing ? 'Produto atualizado!' : 'Produto cadastrado!');
     this.productFormVisible = false;

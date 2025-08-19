@@ -105,12 +105,6 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-chart-line',
                 routerLink: ['/estoque/produto-insights'],
               },
-
-              {
-                label: 'Cadastro de produtos',
-                icon: 'pi pi-fw pi-clipboard',
-                routerLink: ['/estoque/inventario'],
-              },
               {
                 label: 'Entrada de Produtos',
                 icon: 'pi pi-fw pi-plus',
