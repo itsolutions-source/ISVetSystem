@@ -1,0 +1,134 @@
+<p-drawer
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [position]="position()"
+  [modal]="modal()"
+  [dismissible]="dismissible()"
+  [blockScroll]="blockScroll()"
+  [styleClass]="styleClass()"
+  [closable]="closable()"
+>
+  <!-- Header -->
+  <ng-template #header>
+    <div class="flex items-center justify-between w-full">
+      <h3 class="m-0 font-semibold text-base md:text-lg">Logs & Auditoria</h3>
+      <div class="flex gap-2">
+        <p-button
+          icon="pi pi-download"
+          class="p-button-sm p-button-text"
+          (onClick)="exportCsv.emit()"
+          pTooltip="Exportar CSV"
+          variant="text"
+        />
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Filtros -->
+  <div
+    class="flex flex-col lg:flex-row gap-3 items-start lg:items-end mt-3 mb-6"
+  >
+    <p-floatlabel class="w-full lg:w-36" variant="on">
+      <p-datepicker
+        [ngModel]="from()"
+        (ngModelChange)="from.set($event)"
+        dateFormat="dd/mm/yy"
+        iconDisplay="input"
+        [showIcon]="true"
+        class="w-full"
+      />
+      <label>De</label>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full lg:w-36" variant="on">
+      <p-datepicker
+        [ngModel]="to()"
+        (ngModelChange)="to.set($event)"
+        dateFormat="dd/mm/yy"
+        iconDisplay="input"
+        [showIcon]="true"
+        class="w-full"
+      />
+      <label>Até</label>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full lg:w-70" variant="on">
+      <input
+        pInputText
+        [ngModel]="actor()"
+        (ngModelChange)="actor.set($event)"
+        class="w-full"
+      />
+      <label>Funcionário</label>
+    </p-floatlabel>
+
+    <p-floatlabel class="w-full lg:w-65" variant="on">
+      <p-multiselect
+        [options]="actionOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="actions()"
+        (ngModelChange)="actions.set($event)"
+        display="chip"
+        [filter]="true"
+        [selectedItemsLabel]="selectedItemsLabel()"
+        class="w-full"
+      />
+      <label>Ações</label>
+    </p-floatlabel>
+
+    <div class="flex gap-2">
+      <button
+        pButton
+        label="Limpar"
+        class="p-button-secondary"
+        type="button"
+        (click)="clear.emit()"
+      ></button>
+    </div>
+  </div>
+
+  <p-table
+    [value]="rows()"
+    [paginator]="paginator()"
+    [rows]="pageSize()"
+    [rowsPerPageOptions]="pageSizeOptions()"
+    [rowHover]="rowHover()"
+    [tableStyle]="{ 'min-width': minWidth() }"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="width: 12rem">Data</th>
+        <th style="width: 10rem">Ação</th>
+        <th>Usuário</th>
+        <th style="width: 8rem" class="text-right">Qtd</th>
+        <th style="width: 10rem">Lote</th>
+        <th>Obs</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-log>
+      <tr>
+        <td>{{ log.occurredAt | date : "dd/MM/yyyy HH:mm" }}</td>
+        <td>
+          <p-tag
+            [value]="labelForAction()(log.action)"
+            [severity]="severityForAction()(log.action)"
+          />
+        </td>
+        <td>{{ log.actorName }} ({{ log.actorId }})</td>
+        <td class="text-right">{{ log.qty ?? "—" }}</td>
+        <td>{{ log.batch || "—" }}</td>
+        <td>{{ log.note || "—" }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="text-center py-4">
+          Sem registros para os filtros informados.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-drawer>

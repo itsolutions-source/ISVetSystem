@@ -1,0 +1,70 @@
+<p-card>
+      <p-table
+        [value]="rows()"
+        [paginator]="paginator()"
+        [rows]="pageSize()"
+        [rowsPerPageOptions]="pageSizeOptions()"
+        [rowHover]="rowHover()"
+        [tableStyle]="{ 'min-width': minWidth() }"
+      >
+        <!-- Cabeçalho -->
+        <ng-template #header>
+          <tr>
+            <th style="width: 28%">Produto</th>
+            <th style="width: 12%">Código</th>
+            <th style="width: 10%">Categoria</th>
+            <th style="width: 10%">Status</th>
+            <th style="width: 10%">Quantidade</th>
+            <th style="width: 15%">Validade Próx.</th>
+            <th style="width: 15%">Últ. Movim.</th>
+          </tr>
+        </ng-template>
+
+        <!-- Linhas -->
+        <ng-template #body let-row>
+          <tr (click)="rowSelected.emit(row)" style="cursor: pointer">
+            <td class="font-medium">{{ row.product.name }}</td>
+            <td>{{ row.product.barcode }}</td>
+            <td>{{ row.product.category }}</td>
+
+            <td>
+              <p-tag
+                [value]="row.product.active ? 'Ativo' : 'Inativo'"
+                [severity]="row.product.active ? 'success' : 'warning'"
+              />
+            </td>
+
+            <td>
+              <span
+                [class.text-red-600]="row.belowMin"
+                [class.font-semibold]="row.belowMin"
+              >
+                {{ row.totalQty }}
+              </span>
+            </td>
+
+            <td>
+              @if (row.nearestExpiry) {
+                <span
+                  [class.text-red-600]="row.expired"
+                  [class.text-orange-500]="row.expiringSoon && !row.expired"
+                >
+                  {{ row.nearestExpiry }}
+                </span>
+              } @else {
+                <span class="opacity-50">—</span>
+              }
+            </td>
+
+            <td>{{ row.lastMovementAt || '—' }}</td>
+          </tr>
+        </ng-template>
+
+        <!-- Vazio -->
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="text-center py-6">Nenhum item encontrado.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>

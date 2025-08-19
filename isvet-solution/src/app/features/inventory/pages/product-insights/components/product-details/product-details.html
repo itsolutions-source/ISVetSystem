@@ -1,0 +1,234 @@
+<p-drawer
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [fullScreen]="true"
+  [styleClass]="'product-details-drawer'"
+  [closable]="false"
+>
+  @if (selectedRow()) {
+  <ng-template #header>
+    <div class="flex items-start justify-between w-full">
+      <div>
+        <h2 class="text-2xl font-semibold leading-tight">
+          {{ selectedRow()!.product.name }}
+        </h2>
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          pButton
+          icon="pi pi-list-check"
+          class="p-button p-button-outlined"
+          label="Logs & Auditoria"
+          (click)="audit.emit()"
+        ></button>
+
+        <button
+          pButton
+          label="Editar"
+          icon="pi pi-pencil"
+          (click)="edit.emit(selectedRow()!)"
+        ></button>
+        <button
+          pButton
+          label="Fechar"
+          class="p-button-secondary"
+          icon="pi pi-times"
+          (click)="onClose()"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- GRID DE CARDS -->
+  <div class="detail-grid">
+    <!-- 1) Informações gerais -->
+    <p-card>
+      <ng-template #title>Informações gerais</ng-template>
+      <div class="kv">
+        <div class="kv-row">
+          <span>Nome</span><strong>{{ selectedRow()!.product.name }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Código</span><strong>{{ selectedRow()!.product.id }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Código de barras</span
+          ><strong>{{ selectedRow()!.product.barcode }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Unidade</span><strong>{{ selectedRow()!.product.unit }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Marca</span
+          ><strong>{{ selectedRow()!.product.manufacturer || "—" }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Categoria</span
+          ><strong>{{ selectedRow()!.product.category }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Status</span
+          ><p-tag
+            [value]="selectedRow()!.product.active ? 'Ativo' : 'Inativo'"
+            [severity]="selectedRow()!.product.active ? 'success' : 'warning'"
+          ></p-tag>
+        </div>
+        <div class="kv-row">
+          <span>Cadastrado em</span
+          ><strong>{{
+            selectedRow()!.product.createdAt | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Atualizado em</span
+          ><strong>{{
+            selectedRow()!.product.updatedAt | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- 3) Estoque -->
+    <p-card>
+      <ng-template #title>Estoque</ng-template>
+      <div class="kv">
+        <div class="kv-row">
+          <span>Estoque atual</span><strong>{{ selectedRow()!.totalQty }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Estoque mínimo</span
+          ><strong>{{ selectedRow()!.product.minStock }}</strong>
+        </div>
+
+        <div class="kv-row">
+          <span>Validade + próxima</span
+          ><strong>{{
+            selectedRow()!.nearestExpiry || "—" | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Situação</span>
+          <strong>
+            @if (selectedRow()!.belowMin) {
+            <p-tag value="Abaixo do mínimo" severity="warn" /> } @else if
+            (selectedRow()!.expired) {
+            <p-tag value="Vencido" severity="danger" /> } @else if
+            (selectedRow()!.expiringSoon) {
+            <p-tag value="Vencendo" severity="warning" /> } @else {
+            <p-tag value="OK" severity="success" /> }
+          </strong>
+        </div>
+        <div class="kv-row">
+          <span>Ideal</span><strong>{{ stockSummary()?.ideal }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Excedente</span><strong>{{ stockSummary()?.excess }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Duração estimada</span
+          ><strong>{{ stockSummary()?.estimatedDurationDays }} dias</strong>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- 4) Validade -->
+    <p-card>
+      <ng-template #title>Validade</ng-template>
+      <div class="kv">
+        <div class="kv-row">
+          <span>Mais antiga</span
+          ><strong>{{
+            selectedRow()!.nearestExpiry || "—" | date : "dd/MM/yyyy"
+          }}</strong>
+        </div>
+        <div class="kv-row">
+          <span>Lotes ativos</span
+          ><strong>{{ batchesByProduct()?.length || 0 }}</strong>
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <p-table
+        [value]="batchesByProduct()"
+        [rows]="5"
+        [paginator]="batchesByProduct.length > 5"
+      >
+        <ng-template #header>
+          <tr>
+            <th>Lote</th>
+            <th>Validade</th>
+            <th>Quantidade</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-b>
+          <tr>
+            <td>{{ b.lot }}</td>
+            <td>{{ b.expiresAt | date : "dd/MM/yyyy" }}</td>
+            <td>{{ b.quantity }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="3" class="text-center py-4">Sem lotes cadastrados.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- 7) Saídas (histórico resumido) -->
+    <p-card>
+      <ng-template #title>Saídas</ng-template>
+      <p-table [value]="outgoSummary()" [rows]="3">
+        <ng-template #header>
+          <tr>
+            <th>Mês</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-r>
+          <tr>
+            <td>{{ r.month }}</td>
+            <td class="text-right">{{ r.total }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="4" class="text-center py-4">
+              Sem saídas nos últimos meses.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- 8) Entradas (histórico) -->
+    <p-card>
+      <ng-template #title>Entradas</ng-template>
+      <div class="text-sm opacity-80 mb-2">
+        {{ inboundSummary.length ? "" : "Nenhuma entrada nos últimos 3 meses" }}
+      </div>
+      <p-table [value]="inboundSummary()" [rows]="3">
+        <ng-template #header>
+          <tr>
+            <th>Data</th>
+            <th>Lote</th>
+            <th class="text-right">Qtd</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-r>
+          <tr>
+            <td>{{ r.date }}</td>
+            <td>{{ r.lot }}</td>
+            <td class="text-right">{{ r.qty }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="3" class="text-center py-4">Sem entradas recentes.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+  }
+</p-drawer>

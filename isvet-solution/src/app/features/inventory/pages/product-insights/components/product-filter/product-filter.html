@@ -1,0 +1,64 @@
+    <p-card class="mt-4 mb-4">
+      <div class="flex flex-col lg:flex-row gap-3 items-start lg:items-end">
+        <!-- Busca -->
+        <p-floatlabel class="w-full lg:w-72" variant="on">
+          <input
+            pInputText
+            id="q"
+            class="w-full"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+          />
+          <label for="q">Buscar por nome ou código</label>
+        </p-floatlabel>
+
+        <!-- Categorias -->
+        <p-floatlabel class="w-full lg:w-72" variant="on">
+          <p-multiselect
+            [options]="categoryOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="selectedCategories()"
+            (ngModelChange)="selectedCategories.set($event)"
+            display="chip"
+            [filter]="true"
+            class="w-full"
+            [selectedItemsLabel]="selectedItemsLabel()"
+          ></p-multiselect>
+          <label>Categorias</label>
+        </p-floatlabel>
+
+        <!-- Status -->
+        <p-floatlabel class="w-full lg:w-56" variant="on">
+          <p-select
+            [options]="statusOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="statusFilter.set($event)"
+            class="w-full"
+          ></p-select>
+          <label>Status</label>
+        </p-floatlabel>
+
+        <span class="flex-1"></span>
+
+        <div class="flex gap-2">
+          <button
+            pButton
+            type="button"
+            label="Limpar"
+            class="p-button-secondary"
+            (click)="onClear()"
+          ></button>
+
+          <p-button
+            label="Cadastrar"
+            icon="pi pi-plus"
+            severity="primary"
+            class="mr-2"
+            (onClick)="onCreate()"
+          />
+        </div>
+      </div>
+    </p-card>

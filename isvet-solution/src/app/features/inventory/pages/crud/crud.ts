@@ -1,27 +1,9 @@
 
 import { Component, OnInit, ViewChild, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
-import { DatePicker } from 'primeng/datepicker';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { RatingModule } from 'primeng/rating';
-import { SelectModule } from 'primeng/select';
-import { Table, TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { TextareaModule } from 'primeng/textarea';
-import { ToolbarModule } from 'primeng/toolbar';
-import { ToastModule } from 'primeng/toast';
-import { RippleModule } from 'primeng/ripple';
+import { Table } from 'primeng/table';
+import { CommonComponentsModule } from '@shared/common-components-module';
 import { Product, ProductService } from './product.service';
-import { CommonComponentsModule } from '../../../../shared/common-components-module';
 
 interface Column {
   field: string;

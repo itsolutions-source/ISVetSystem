@@ -1,0 +1,65 @@
+<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+  <p-card
+    class="kpi-card kpi-warning"
+    [ngClass]="{ 'kpi-active': active() === 'expiringSoon' }"
+    (click)="select.emit('expiringSoon')"
+    [ngStyle]="{ cursor: 'pointer' }"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-sm/5 opacity-90">
+          Vencendo ≤ {{ expiringWithinDays() }} dias
+        </div>
+        <div class="text-3xl font-semibold mt-1">
+          {{ kpi().expiringSoon }}
+        </div>
+      </div>
+      <i class="pi pi-clock text-2xl kpi-icon"></i>
+    </div>
+  </p-card>
+
+  <p-card
+    class="kpi-card kpi-danger"
+    [ngClass]="{ 'kpi-active': active() === 'expired' }"
+    (click)="select.emit('expired')"
+    [ngStyle]="{ cursor: 'pointer' }"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-sm/5 opacity-90">Vencidos</div>
+        <div class="text-3xl font-semibold mt-1">{{ kpi().expired }}</div>
+      </div>
+      <i class="pi pi-times-circle text-2xl kpi-icon"></i>
+    </div>
+  </p-card>
+
+  <p-card
+    class="kpi-card kpi-accent"
+    [ngClass]="{ 'kpi-active': active() === 'belowMin' }"
+    (click)="select.emit('belowMin')"
+    [ngStyle]="{ cursor: 'pointer' }"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-sm/5 opacity-90">Abaixo do mínimo</div>
+        <div class="text-3xl font-semibold mt-1">{{ kpi().belowMin }}</div>
+      </div>
+      <i class="pi pi-arrow-down text-2xl kpi-icon"></i>
+    </div>
+  </p-card>
+
+  <p-card
+    class="kpi-card kpi-neutral"
+    [ngClass]="{ 'kpi-active': active() === 'noMovement' }"
+    (click)="select.emit('noMovement')"
+    [ngStyle]="{ cursor: 'pointer' }"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-sm/5 opacity-90">Sem movimento (≥ 60d)</div>
+        <div class="text-3xl font-semibold mt-1">{{ kpi().noMovement }}</div>
+      </div>
+      <i class="pi pi-history text-2xl kpi-icon"></i>
+    </div>
+  </p-card>
+</div>

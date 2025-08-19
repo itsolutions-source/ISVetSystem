@@ -5,105 +5,51 @@ import {
   signal,
 } from '@angular/core';
 
-// PrimeNG
-import { CommonComponentsModule } from '../../../../shared/common-components-module';
+import { CommonComponentsModule } from '@shared/common-components-module';
+import { ProductCrud } from './components/product-crud/product-crud';
+import { ProductDetails } from './components/product-details/product-details';
+import { ProductFilters } from './components/product-filter/product-filter';
+import { ProductKpi } from './components/product-kpi/product-kpi';
+import { ProductLogs } from './components/product-logs/product-logs';
+import { ProductTable } from './components/product-table/product-table';
+import {
+  AuditAction,
+  AuditLogEntry,
+  AuditSeverity,
+  Batch,
+  InventoryRow,
+  KpiCounts,
+  LotRow,
+  Movement,
+  Product,
+  ProductForm,
+} from './models/product.model';
 
-// Tipos
-interface Product {
-  id: string;
-  name: string;
-  barcode: string;
-  category: string;
-  unit: string;
-  minStock: number;
-  active: boolean;
-  manufacturer?: string;
-  description?: string;
-  createdAt: string; // ISO
-  updatedAt: string; // ISO
-}
-interface Batch {
-  id: string;
-  productId: string;
-  lot: string;
-  expiresAt: string; // ISO
-  quantity: number;
-}
-interface Movement {
-  id: string;
-  productId: string;
-  type: 'in' | 'out' | 'adjust';
-  quantity: number;
-  batchId?: string;
-  createdAt: string; // ISO
-  reason?: string;
-}
-interface InventoryRow {
-  product: Product;
-  totalQty: number;
-  nearestExpiry?: string; // ISO
-  lastMovementAt?: string; // ISO
-  belowMin: boolean;
-  expired: boolean;
-  expiringSoon: boolean;
-}
-
-type AuditAction =
-  | 'PRODUCT_CREATED'
-  | 'PRODUCT_UPDATED'
-  | 'STOCK_IN'
-  | 'STOCK_OUT'
-  | 'STOCK_ADJUST';
-
-interface AuditLogEntry {
-  id: string;
-  productId: string;
-  action: AuditAction;
-  qty?: number;
-  batch?: string | null;
-  before?: unknown;
-  after?: unknown;
-  actorId: string;
-  actorName: string;
-  occurredAt: string; // ISO
-  note?: string;
-}
-
-// Modelo simples do formulário (mock)
-type ProductForm = {
-  id: string;
-  name: string;
-  barcode: string;
-  unit: string | null;
-  manufacturer: string;
-  category: string | null;
-  active: boolean;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  description: string;
-
-  currentQty: number;
-  minStock: number;
-  nearestExpiry: Date | null;
-
-  idealStock: number | null;
-  excessStock: number | null;
-  estimatedDurationDays: number | null;
-};
-
-// Lotes do formulário
-type LotRow = { lot: string; expiresAt: Date | null; quantity: number };
+import {
+  addDays,
+  daysBetween,
+  normalize,
+} from '../../../../shared/utils/utils';
+import { BATCHES, MOVEMENTS, PRODUCTS } from './mocks/product-mock';
 
 @Component({
   selector: 'app-catalog-insights',
   standalone: true,
-  imports: [CommonComponentsModule],
+  imports: [
+    CommonComponentsModule,
+    ProductKpi,
+    ProductFilters,
+    ProductTable,
+    ProductDetails,
+    ProductLogs,
+    ProductCrud,
+  ],
   templateUrl: './product-insights.html',
   styleUrls: ['./product-insights.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductInsights {
-  // estado do filtro rápido pelos cards
+  // filtro pelos cards (controlado pelo filho via (select))
   activeKpiFilter:
     | 'expiringSoon'
     | 'expired'
@@ -112,138 +58,17 @@ export class ProductInsights {
     | null = null;
 
   // ================= Mock (substitua por serviços depois) =================
-  private readonly products = signal<Product[]>([
-    {
-      id: 'p1',
-      name: 'Dipirona 500mg',
-      barcode: '789100000001',
-      category: 'Analgésico',
-      unit: 'comprimido',
-      minStock: 20,
-      active: true,
-      manufacturer: 'ACME Vet',
-      createdAt: '2025-01-10',
-      updatedAt: '2025-08-01',
-    },
-    {
-      id: 'p2',
-      name: 'Amoxicilina 250mg',
-      barcode: '789100000002',
-      category: 'Antibiótico',
-      unit: 'cápsula',
-      minStock: 10,
-      active: true,
-      manufacturer: 'VetLabs',
-      createdAt: '2025-03-15',
-      updatedAt: '2025-07-20',
-    },
-    {
-      id: 'p3',
-      name: 'Gentamicina 40mg/mL',
-      barcode: '789100000019',
-      category: 'Antibiótico',
-      unit: 'frasco',
-      minStock: 5,
-      active: true,
-      manufacturer: 'BioVet',
-      createdAt: '2025-02-05',
-      updatedAt: '2025-06-30',
-    },
-    {
-      id: 'p4',
-      name: 'Ranitidina 150mg',
-      barcode: '789100000015',
-      category: 'Gastro',
-      unit: 'comprimido',
-      minStock: 15,
-      active: false,
-      manufacturer: 'PharmaX',
-      createdAt: '2024-11-20',
-      updatedAt: '2025-04-08',
-    },
-  ]);
+  private readonly products = signal<Product[]>(PRODUCTS);
 
-  private readonly batches = signal<Batch[]>([
-    {
-      id: 'b1',
-      productId: 'p1',
-      lot: 'L-A',
-      expiresAt: this.isoDaysFromNow(25),
-      quantity: 12,
-    },
-    {
-      id: 'b2',
-      productId: 'p1',
-      lot: 'L-B',
-      expiresAt: this.isoDaysFromNow(90),
-      quantity: 30,
-    },
-    {
-      id: 'b3',
-      productId: 'p2',
-      lot: 'L-C',
-      expiresAt: this.isoDaysFromNow(-3),
-      quantity: 3,
-    },
-    {
-      id: 'b4',
-      productId: 'p2',
-      lot: 'L-D',
-      expiresAt: this.isoDaysFromNow(12),
-      quantity: 4,
-    },
-    {
-      id: 'b5',
-      productId: 'p3',
-      lot: 'L-E',
-      expiresAt: this.isoDaysFromNow(50),
-      quantity: 6,
-    },
-    {
-      id: 'b6',
-      productId: 'p4',
-      lot: 'L-F',
-      expiresAt: this.isoDaysFromNow(180),
-      quantity: 100,
-    },
-  ]);
+  private readonly batches = signal<Batch[]>(BATCHES);
 
-  private readonly movements = signal<Movement[]>([
-    {
-      id: 'm1',
-      productId: 'p1',
-      type: 'in',
-      quantity: 50,
-      createdAt: '2025-07-20',
-    },
-    {
-      id: 'm2',
-      productId: 'p1',
-      type: 'out',
-      quantity: 8,
-      createdAt: '2025-08-10',
-    },
-    {
-      id: 'm3',
-      productId: 'p2',
-      type: 'out',
-      quantity: 5,
-      createdAt: '2025-05-01',
-    },
-    {
-      id: 'm4',
-      productId: 'p3',
-      type: 'in',
-      quantity: 6,
-      createdAt: '2025-06-22',
-    },
-  ]);
+  private readonly movements = signal<Movement[]>(MOVEMENTS);
 
   // ================= Filtros =================
   search = '';
   selectedCategories: string[] = [];
   statusFilter: 'todos' | 'ativos' | 'inativos' = 'todos';
-  onlyBelowMin = false;
+  onlyBelowMin = false; // (sem UI, mas usado na filtragem)
   expiringWithinDays = 30;
 
   get categoryOptions() {
@@ -252,6 +77,7 @@ export class ProductInsights {
       .sort()
       .map((c) => ({ label: c, value: c }));
   }
+
   statusOptions = [
     { label: 'Todos', value: 'todos' },
     { label: 'Ativos', value: 'ativos' },
@@ -269,18 +95,16 @@ export class ProductInsights {
         nearest: undefined,
       };
       entry.total += b.quantity;
-      if (!entry.nearest || new Date(b.expiresAt) < new Date(entry.nearest)) {
+      if (!entry.nearest || new Date(b.expiresAt) < new Date(entry.nearest))
         entry.nearest = b.expiresAt;
-      }
       byProduct.set(b.productId, entry);
     }
 
     const lastMovementByProduct = new Map<string, string>();
     for (const mv of this.movements()) {
       const prev = lastMovementByProduct.get(mv.productId);
-      if (!prev || new Date(mv.createdAt) > new Date(prev)) {
+      if (!prev || new Date(mv.createdAt) > new Date(prev))
         lastMovementByProduct.set(mv.productId, mv.createdAt);
-      }
     }
 
     const soonDays = this.expiringWithinDays;
@@ -292,7 +116,7 @@ export class ProductInsights {
 
       const expired = nearest ? new Date(nearest) < today : false;
       const expiringSoon = nearest
-        ? !expired && this.daysBetween(today, new Date(nearest)) <= soonDays
+        ? !expired && daysBetween(today, new Date(nearest)) <= soonDays
         : false;
 
       const lastMovementAt = lastMovementByProduct.get(p.id);
@@ -320,23 +144,23 @@ export class ProductInsights {
     () => this.rows().filter((r) => r.belowMin).length
   );
   readonly kpiNoMovement = computed(() => {
-    const cutoff = this.addDays(new Date(), -60);
+    const cutoff = addDays(new Date(), -60);
     return this.rows().filter(
       (r) => !r.lastMovementAt || new Date(r.lastMovementAt) < cutoff
     ).length;
   });
 
+  readonly kpi = computed<KpiCounts>(() => ({
+    expired: this.kpiExpired(),
+    expiringSoon: this.kpiExpiringSoon(),
+    belowMin: this.kpiBelowMin(),
+    noMovement: this.kpiNoMovement(),
+  }));
+
   // ================= Filtradas (getter) =================
-
-  toggleKpiFilter(
-    kind: 'expiringSoon' | 'expired' | 'belowMin' | 'noMovement'
-  ) {
-    this.activeKpiFilter = this.activeKpiFilter === kind ? null : kind; // clique novamente para limpar
-  }
-
   get filteredRows(): InventoryRow[] {
-    const q = this.normalize(this.search);
-    const cats = this.selectedCategories; // <-- array
+    const q = normalize(this.search);
+    const cats = this.selectedCategories;
     const status = this.statusFilter;
     const belowOnly = this.onlyBelowMin;
 
@@ -344,14 +168,12 @@ export class ProductInsights {
       if (
         q &&
         !(
-          this.normalize(r.product.name).includes(q) ||
+          normalize(r.product.name).includes(q) ||
           r.product.barcode.includes(q)
         )
       )
         return false;
-
-      if (cats.length > 0 && !cats.includes(r.product.category)) return false; // <-- multi
-
+      if (cats.length > 0 && !cats.includes(r.product.category)) return false;
       if (status === 'ativos' && !r.product.active) return false;
       if (status === 'inativos' && r.product.active) return false;
       if (belowOnly && !r.belowMin) return false;
@@ -360,7 +182,7 @@ export class ProductInsights {
 
     if (!this.activeKpiFilter) return base;
 
-    const cutoff = this.addDays(new Date(), -60);
+    const cutoff = addDays(new Date(), -60);
     switch (this.activeKpiFilter) {
       case 'expired':
         return base.filter((r) => r.expired);
@@ -396,32 +218,7 @@ export class ProductInsights {
     this.onlyBelowMin = false;
   }
 
-  // ================= Utils =================
-  private normalize(s: string): string {
-    return (s || '')
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .toLowerCase()
-      .trim();
-  }
-  private isoDaysFromNow(days: number): string {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().slice(0, 10);
-  }
-  private addDays(date: Date, days: number): Date {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
-  }
-  private daysBetween(a: Date, b: Date): number {
-    const MS = 1000 * 60 * 60 * 24;
-    return Math.ceil((b.getTime() - a.getTime()) / MS);
-  }
-
   // ---- Helpers para o Drawer full ----
-
-  // lotes do produto selecionado
   get batchesByProduct() {
     if (!this.selectedRow) return [];
     return this.batches().filter(
@@ -429,65 +226,37 @@ export class ProductInsights {
     );
   }
 
-  // resumo de estoque (mockado aqui; depois pode vir do backend)
   get stockSummary() {
     const total = this.selectedRow?.totalQty ?? 0;
+    const monthlyDemand = this.priceSummary.monthlyDemand; // mock simples
     return {
       ideal: Math.max(total, (this.selectedRow?.product.minStock ?? 0) * 2),
       excess: Math.max(0, total - (this.selectedRow?.product.minStock ?? 0)),
       estimatedDurationDays: Math.round(
-        (total / Math.max(1, this.priceSummary.monthlyDemand)) * 30
+        (total / Math.max(1, monthlyDemand)) * 30
       ),
-      monthlyAvg: this.priceSummary.monthlyDemand,
+      monthlyAvg: monthlyDemand,
     };
   }
 
-  // preço/custo (placeholder – substitua pelos dados reais)
-  priceSummary = {
-    salePrice: 212.92,
-    costPrice: 106.46,
-    targetMarkup: 100,
-    currentMarkup: 100,
-    showInList: true,
-    monthlyDemand: 1, // usado para estimativa de duração
-  };
+  // mock simples usado no cálculo acima
+  private priceSummary = { monthlyDemand: 1 };
 
-  // desconto (placeholder)
-  discountSummary = {
-    allowsOverride: true,
-  };
-
-  // comissão (placeholder)
-  commissionSummary = {
-    enabled: false,
-    percent: 0,
-  };
-
-  // histórico de saídas (placeholder)
   get outgoSummary() {
-    // monte a partir de this.movements() se quiser; aqui é exemplo fixo
     return [
-      { month: 'Mai', sales: 2, internal: 1, total: 3 },
-      { month: 'Jun', sales: 0, internal: 0, total: 0 },
-      { month: 'Jul', sales: 0, internal: 0, total: 0 },
+      { month: 'Mai', total: 3 },
+      { month: 'Jun', total: 0 },
+      { month: 'Jul', total: 0 },
     ];
   }
 
-  // entradas (placeholder)
   get inboundSummary() {
-    // a partir de movements type: 'in' + batches; aqui estático
-    return [
-      // { date: '2025-06-22', lot: 'L-E', qty: 6 }
-    ];
+    return [{ date: '2025-06-22', lot: 'L-E', qty: 6 }];
   }
 
-  // flag admin mock (troque depois pelo AuthService)
-  isAdmin = true;
-
-  // controle do drawer secundário
+  // ================= Audit Drawer =================
   auditVisible = false;
 
-  // === Opções de filtro (labels) ===
   auditActionOptions = [
     { label: 'Cadastro', value: 'PRODUCT_CREATED' as AuditAction },
     { label: 'Edição', value: 'PRODUCT_UPDATED' as AuditAction },
@@ -496,22 +265,12 @@ export class ProductInsights {
     { label: 'Ajuste', value: 'STOCK_ADJUST' as AuditAction },
   ];
 
-  // === Estado de filtros/paginação ===
   auditFrom?: Date;
   auditTo?: Date;
   auditActions: AuditAction[] = [];
   auditActor = '';
-  auditPage = 1;
-  auditPageSize = 10;
-  auditLoading = false;
 
-  // === Dados de tabela (paginados) ===
-  auditRows: AuditLogEntry[] = [];
-  auditTotal = 0;
-
-  // === MOCK: base com alguns registros por productId ===
   private auditAllMock: AuditLogEntry[] = [
-    // p1
     {
       id: '1',
       productId: 'p1',
@@ -550,8 +309,6 @@ export class ProductInsights {
       occurredAt: '2025-08-01T16:45:00Z',
       note: 'Atualização de cadastro',
     },
-
-    // p2
     {
       id: '5',
       productId: 'p2',
@@ -571,8 +328,6 @@ export class ProductInsights {
       actorName: 'João',
       occurredAt: '2025-07-02T15:10:00Z',
     },
-
-    // p3
     {
       id: '7',
       productId: 'p3',
@@ -585,7 +340,6 @@ export class ProductInsights {
     },
   ];
 
-  // === Helpers de rótulo/severidade para o <p-tag> ===
   auditLabel(a: AuditAction): string {
     switch (a) {
       case 'PRODUCT_CREATED':
@@ -598,11 +352,12 @@ export class ProductInsights {
         return 'Retirada';
       case 'STOCK_ADJUST':
         return 'Ajuste';
+      default:
+        return a;
     }
   }
-  auditSeverity(
-    a: AuditAction
-  ): 'success' | 'warning' | 'danger' | 'info' | 'secondary' {
+
+  auditSeverity(a: AuditAction): AuditSeverity {
     switch (a) {
       case 'PRODUCT_CREATED':
         return 'success';
@@ -614,57 +369,14 @@ export class ProductInsights {
         return 'warning';
       case 'STOCK_ADJUST':
         return 'secondary';
+      default:
+        return 'info';
     }
   }
 
-  // === Carregar (filtrar em memória) ===
-  loadAudit(): void {
-    if (!this.selectedRow) {
-      this.auditRows = [];
-      this.auditTotal = 0;
-      return;
-    }
-
-    this.auditLoading = true;
-    const pid = this.selectedRow.product.id;
-
-    // 1) base por produto
-    let items = this.auditAllMock.filter((x) => x.productId === pid);
-
-    // 2) filtros
-    if (this.auditFrom) {
-      const from = this.auditFrom.setHours(0, 0, 0, 0);
-      items = items.filter((x) => new Date(x.occurredAt).getTime() >= from);
-    }
-    if (this.auditTo) {
-      const to = this.auditTo.setHours(23, 59, 59, 999);
-      items = items.filter((x) => new Date(x.occurredAt).getTime() <= to);
-    }
-    if (this.auditActions.length) {
-      const set = new Set(this.auditActions);
-      items = items.filter((x) => set.has(x.action));
-    }
-    if (this.auditActor.trim()) {
-      const q = this.auditActor.trim().toLowerCase();
-      items = items.filter(
-        (x) =>
-          x.actorName.toLowerCase().includes(q) ||
-          x.actorId.toLowerCase().includes(q)
-      );
-    }
-
-    // 3) ordenação (recente primeiro)
-    items.sort(
-      (a, b) =>
-        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
-    );
-
-    // 4) paginação em memória
-    this.auditTotal = items.length;
-    const start = (this.auditPage - 1) * this.auditPageSize;
-    this.auditRows = items.slice(start, start + this.auditPageSize);
-
-    this.auditLoading = false;
+  openAuditDrawer(): void {
+    if (!this.selectedRow) return;
+    this.auditVisible = true;
   }
 
   resetAuditFilters(): void {
@@ -672,59 +384,10 @@ export class ProductInsights {
     this.auditTo = undefined;
     this.auditActions = [];
     this.auditActor = '';
-    this.auditPage = 1;
-    this.loadAudit();
-  }
-
-  onAuditPageChange(ev: any): void {
-    // PrimeNG Table onPage: {first, rows, page} (page é zero-based)
-    this.auditPage = (ev?.page ?? 0) + 1;
-    this.auditPageSize = ev?.rows ?? this.auditPageSize;
-    this.loadAudit();
-  }
-
-  // === Exportar CSV (em memória) ===
-  exportAuditCsv(): void {
-    const rows = this.auditRows;
-    const header = ['Data', 'Ação', 'Usuário', 'Qtd', 'Lote', 'Obs'];
-    const lines = rows.map((r) => [
-      new Date(r.occurredAt).toLocaleString('pt-BR'),
-      this.auditLabel(r.action),
-      `${r.actorName} (${r.actorId})`,
-      r.qty ?? '',
-      r.batch ?? '',
-      (r.note ?? '').replace(/\n/g, ' '),
-    ]);
-    const csv = [header, ...lines]
-      .map((cols) =>
-        cols.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')
-      )
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `auditoria-${this.selectedRow?.product.name || 'produto'}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  openAuditDrawer(): void {
-    if (!this.selectedRow) return;
-    this.auditVisible = true;
-    // reseta paginação e carrega
-    this.auditPage = 1;
-    // this.loadAudit();
-  }
-
-  closeAuditDrawer(): void {
-    this.auditVisible = false;
   }
 
   get filteredAuditRows(): AuditLogEntry[] {
     if (!this.selectedRow) return [];
-
     const pid = this.selectedRow.product.id;
     let items = this.auditAllMock.filter((x) => x.productId === pid);
 
@@ -750,7 +413,7 @@ export class ProductInsights {
       items = items.filter((x) => set.has(x.action));
     }
 
-    // usuário (id ou nome)
+    // usuário
     const q = this.auditActor.trim().toLowerCase();
     if (q) {
       items = items.filter(
@@ -765,7 +428,6 @@ export class ProductInsights {
       (a, b) =>
         new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
     );
-
     return items;
   }
 
@@ -785,15 +447,11 @@ export class ProductInsights {
     { label: 'g', value: 'g' },
     { label: 'unidade', value: 'un' },
   ];
+  get categoryOptionsCrud() {
+    // (se quiser categorias para o CRUD diferentes das do filtro, senão remova)
+    return this.categoryOptions;
+  }
 
-  // categoryOptions = [
-  //   { label: 'Analgésicos', value: 'Analgésicos' },
-  //   { label: 'Antibióticos', value: 'Antibióticos' },
-  //   { label: 'Anti-inflamatórios', value: 'Anti-inflamatórios' },
-  //   { label: 'Antiparasitários', value: 'Antiparasitários' },
-  // ];
-
-  // Helpers
   private blankProduct(): ProductForm {
     return {
       id: '',
@@ -806,18 +464,15 @@ export class ProductInsights {
       createdAt: new Date(),
       updatedAt: new Date(),
       description: '',
-
       currentQty: 0,
       minStock: 0,
       nearestExpiry: null,
-
       idealStock: null,
       excessStock: null,
       estimatedDurationDays: null,
     };
   }
 
-  // Abrir para criar
   openCreateProduct(): void {
     this.isEditing = false;
     this.formProduct = this.blankProduct();
@@ -825,11 +480,8 @@ export class ProductInsights {
     this.productFormVisible = true;
   }
 
-  // Abrir para editar a partir da linha da tabela
   openEditProduct(row: InventoryRow): void {
     this.isEditing = true;
-
-    // Mapear do seu modelo atual para o form (mock)
     this.formProduct = {
       id: row.product.id,
       name: row.product.name,
@@ -848,13 +500,11 @@ export class ProductInsights {
       currentQty: row.totalQty ?? 0,
       minStock: row.product.minStock ?? 0,
       nearestExpiry: row.nearestExpiry ? new Date(row.nearestExpiry) : null,
-
       idealStock: null,
       excessStock: null,
       estimatedDurationDays: null,
     };
 
-    // lotes do produto selecionado (mock da sua fonte batchesByProduct)
     this.lotRows = this.batchesByProduct.map((b) => ({
       lot: b.lot,
       expiresAt: b.expiresAt ? new Date(b.expiresAt) : null,
@@ -864,43 +514,55 @@ export class ProductInsights {
     this.productFormVisible = true;
   }
 
-  // Validar (regras mínimas)
   productFormValid(): boolean {
     const f = this.formProduct;
     return !!f.name && f.name.trim().length >= 3 && f.minStock >= 0;
   }
 
-  // Salvar (mock)
-  saveProduct(): void {
+  saveProduct(_payload?: unknown): void {
     if (!this.productFormValid()) return;
-
-    const payload = {
-      ...this.formProduct,
-      lots: this.lotRows,
-    };
-
-    // Aqui, faria POST/PUT; por enquanto só loga
-    console.log('Salvar produto', payload);
-
-    // Feedback simples e fechar
-    // (pode usar Toast do PrimeNG se preferir)
+    // aqui faria POST/PUT
+    console.log('Salvar produto', { ...this.formProduct, lots: this.lotRows });
     alert(this.isEditing ? 'Produto atualizado!' : 'Produto cadastrado!');
     this.productFormVisible = false;
-
-    // TODO: atualizar a tabela local (rows) se quiser ver o efeito imediato
   }
 
-  // Cancelar
   cancelProductForm(): void {
     this.productFormVisible = false;
   }
 
-  // Lotes
   addLotRow(): void {
     this.lotRows = [...this.lotRows, { lot: '', expiresAt: null, quantity: 0 }];
   }
 
   removeLotRow(i: number): void {
     this.lotRows = this.lotRows.filter((_, idx) => idx !== i);
+  }
+
+  // === Exportar CSV (usando as linhas filtradas atuais) ===
+  exportAuditCsv(): void {
+    const rows = this.filteredAuditRows;
+    const header = ['Data', 'Ação', 'Usuário', 'Qtd', 'Lote', 'Obs'];
+    const toLine = (r: AuditLogEntry) => [
+      new Date(r.occurredAt).toLocaleString('pt-BR'),
+      this.auditLabel(r.action),
+      `${r.actorName} (${r.actorId})`,
+      r.qty ?? '',
+      r.batch ?? '',
+      (r.note ?? '').replace(/\n/g, ' '),
+    ];
+    const csv = [header, ...rows.map(toLine)]
+      .map((cols) =>
+        cols.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')
+      )
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auditoria-${this.selectedRow?.product.name || 'produto'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

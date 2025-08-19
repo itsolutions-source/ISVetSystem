@@ -1,0 +1,36 @@
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    /* md */
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (min-width: 1280px) {
+    /* xl */
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.kv {
+  display: grid;
+  gap: .5rem;
+}
+
+.kv-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  font-size: .95rem;
+
+  span {
+    opacity: .8;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+}

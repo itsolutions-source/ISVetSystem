@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 import { delay, of } from 'rxjs';
-import { CommonComponentsModule } from '../../../../shared/common-components-module';
+import { CommonComponentsModule } from '@shared/common-components-module';
 import { ConfirmationService } from 'primeng/api';
 import { MedicationItem } from '../../models/medication-item';
 import { MEDICATIONS_MOCK } from '../../data/medications.mock';
