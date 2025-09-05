@@ -1,0 +1,14 @@
+  /* Ajustes visuais */
+  :host {
+    display: block;
+  }
+
+  /* Overlays anexados ao body enquanto Drawer está aberto */
+  .dp-on-drawer.p-datepicker {
+    z-index: 1300 !important;
+  }
+
+  /* Drawer do scanner */
+  .scan-drawer .p-drawer {
+    width: min(520px, 92vw);
+  }

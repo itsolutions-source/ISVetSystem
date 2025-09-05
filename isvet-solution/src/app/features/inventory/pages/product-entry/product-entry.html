@@ -1,1 +1,283 @@
-<p>product-entry works!</p>
+<div class="space-y-4">
+  <!-- Título / Ações -->
+  <p-card>
+    <div
+      class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
+    >
+      <div>
+        <h2 class="m-0 text-xl font-semibold">Entrada de Produtos</h2>
+        <div class="opacity-70 text-sm">
+          Adicione itens manualmente, por leitor de código de barras ou
+          importando NF-e (XML)
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button
+          pButton
+          label="Limpar"
+          class="p-button-secondary"
+          (click)="clearAll()"
+        ></button>
+        <button
+          pButton
+          label="Confirmar Entrada"
+          icon="pi pi-check"
+          [disabled]="rows().length === 0"
+          (click)="confirmEntry()"
+        ></button>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Formas de entrada -->
+  <p-card>
+    <p-tabs>
+      <p-tabpanels header="Manual">
+        <div class="flex flex-col md:flex-row gap-2 md:items-end">
+          <p-floatlabel class="w-full md:w-80" variant="on">
+            <input
+              pInputText
+              id="entryInput"
+              #entryInputRef
+              name="entryInput"
+              [(ngModel)]="entryInput"
+              placeholder="Código de barras ou nome (mín. 4 letras para nome)"
+              (keydown.enter)="addByInput()"
+              class="w-full"
+            />
+            <label for="entryInput">Adicionar item</label>
+          </p-floatlabel>
+
+          <button
+            pButton
+            icon="pi pi-plus"
+            label="Adicionar"
+            (click)="addByInput()"
+          ></button>
+        </div>
+      </p-tabpanels>
+
+      <p-tabpanels header="Leitor">
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            pButton
+            icon="pi pi-camera"
+            label="Iniciar câmera"
+            (click)="openScanner()"
+          ></button>
+          <span class="opacity-75 text-sm"
+            >Aponte para o código de barras para capturar o item.</span
+          >
+        </div>
+      </p-tabpanels>
+
+      <p-tabpanels header="NF-e XML">
+        <div
+          class="flex flex-col md:flex-row items-start md:items-center gap-3"
+        >
+          <p-fileUpload
+            mode="basic"
+            name="nfe"
+            chooseLabel="Selecionar XML"
+            (onSelect)="onXmlSelected($event)"
+            accept=".xml"
+            [auto]="true"
+            [maxFileSize]="10485760"
+          ></p-fileUpload>
+
+          <button
+            pButton
+            icon="pi pi-refresh"
+            label="Simular leitura"
+            class="p-button-secondary"
+            (click)="simulateXmlImport()"
+          ></button>
+          <span class="opacity-75 text-sm"
+            >Importe itens, lotes, validade e quantidade da nota (protótipo
+            simulado).</span
+          >
+        </div>
+      </p-tabpanels>
+    </p-tabs>
+  </p-card>
+
+  <!-- Tabela de itens da entrada -->
+  <p-card>
+    <ng-template #title>Itens para entrada</ng-template>
+
+    <ng-template #caption>
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full"
+      >
+        <h5 class="m-0 text-center sm:text-left w-full">Conferência</h5>
+        <div
+          class="text-sm opacity-80 text-center sm:text-right w-full sm:w-auto"
+        >
+          {{ rows().length }} item(s) • Quantidade total:
+          <strong>{{ totalQty() }}</strong>
+        </div>
+      </div>
+    </ng-template>
+
+    <p-table
+      [value]="rows()"
+      [rowHover]="true"
+      [tableStyle]="{ 'min-width': '60rem' }"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 12rem">Código</th>
+          <th>Produto</th>
+          <th style="width: 7rem" class="text-right">Qtd</th>
+          <th style="width: 10rem">Lote</th>
+          <th style="width: 12rem">Validade</th>
+          <th style="width: 10rem" class="text-right">Custo (R$)</th>
+          <th style="width: 6rem"></th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-r let-i="rowIndex">
+        <tr>
+          <td>
+            <div class="flex items-center gap-2">
+              <span>{{ r.barcode }}</span>
+              @if (r.unknown) {
+              <p-tag value="Não cadastrado" severity="warning"></p-tag>
+              }
+            </div>
+          </td>
+          <td>
+            <input
+              pInputText
+              [(ngModel)]="r.name"
+              name="name_{{ i }}"
+              class="w-full"
+            />
+          </td>
+          <td class="text-right">
+            <p-inputnumber
+              [(ngModel)]="r.qty"
+              name="qty_{{ i }}"
+              [min]="1"
+              [showButtons]="true"
+              class="w-full"
+              inputId="qty_{{ i }}"
+            ></p-inputnumber>
+          </td>
+          <td>
+            <input
+              pInputText
+              [(ngModel)]="r.lot"
+              name="lot_{{ i }}"
+              class="w-full"
+              placeholder="Ex.: L-001"
+            />
+          </td>
+          <td>
+            <p-datepicker
+              [(ngModel)]="r.expiresAt"
+              name="exp_{{ i }}"
+              dateFormat="dd/mm/yy"
+              showIcon="true"
+              [appendTo]="'body'"
+              panelStyleClass="dp-on-drawer"
+              class="w-full"
+            ></p-datepicker>
+          </td>
+          <td class="text-right">
+            <p-inputnumber
+              [(ngModel)]="r.unitCost"
+              name="cost_{{ i }}"
+              [min]="0"
+              [mode]="'currency'"
+              currency="BRL"
+              locale="pt-BR"
+              class="w-full"
+            ></p-inputnumber>
+          </td>
+          <td class="text-right">
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-danger p-button-text"
+              (click)="removeRow(i)"
+              pTooltip="Remover"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="7" class="text-center py-6">
+            Nenhum item adicionado ainda.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <p-divider />
+
+    <div
+      class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
+    >
+      <div class="opacity-80 text-sm">
+        Dicas: use o leitor para adicionar rapidamente; importe XML para vários
+        itens.<br />
+        Itens "Não cadastrados" podem ser ajustados (nome) e cadastrados ao
+        salvar.
+      </div>
+      <div class="text-right w-full md:w-auto">
+        <div>
+          Total de itens: <strong>{{ rows().length }}</strong>
+        </div>
+        <div>
+          Quantidade total: <strong>{{ totalQty() }}</strong>
+        </div>
+      </div>
+    </div>
+  </p-card>
+</div>
+
+<!-- Drawer do leitor (protótipo) -->
+<p-drawer
+  [(visible)]="scanVisible"
+  [position]="'right'"
+  [modal]="true"
+  [dismissible]="true"
+  [blockScroll]="true"
+  [styleClass]="'scan-drawer'"
+  [closable]="true"
+>
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full">
+      <h3 class="m-0 font-semibold text-base md:text-lg">
+        Leitor de Código de Barras
+      </h3>
+    </div>
+  </ng-template>
+
+  <div class="space-y-3">
+    <div class="opacity-80 text-sm">
+      Protótipo: simule capturas clicando nos botões abaixo.
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button
+        pButton
+        label="Ler 789100000001"
+        (click)="onScanned('789100000001')"
+      ></button>
+      <button
+        pButton
+        label="Ler 789100000002"
+        (click)="onScanned('789100000002')"
+      ></button>
+      <button
+        pButton
+        label="Ler 999999999999 (desconhecido)"
+        class="p-button-secondary"
+        (click)="onScanned('999999999999')"
+      ></button>
+    </div>
+  </div>
+</p-drawer>

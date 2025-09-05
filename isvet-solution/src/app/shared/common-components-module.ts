@@ -25,8 +25,10 @@ import { TextareaModule } from 'primeng/textarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
-import { DatePicker } from 'primeng/datepicker';
+import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { FileUploadModule } from 'primeng/fileupload';
+import { TabsModule } from 'primeng/tabs';
 
 const PRIME_NG_COMPONENTS = [
   TableModule,
@@ -55,6 +57,9 @@ const PRIME_NG_COMPONENTS = [
   IconFieldModule,
   DatePicker,
   ToggleSwitchModule,
+  FileUploadModule,
+  DatePickerModule,
+  TabsModule
 ];
 
 const COMMON_COMPONENTS = [CommonModule, FormsModule];

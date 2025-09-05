@@ -203,12 +203,14 @@
               placeholder="Ex.: L-123"
             />
           </td>
-          <td style="z-index: 10000">
+          <td>
             <p-datepicker
               name="expiresAt_{{ i }}"
               [ngModel]="r.expiresAt"
               dateFormat="dd/mm/yy"
               iconDisplay="input"
+              [appendTo]="'body'"
+              panelStyleClass="dp-on-drawer"
               [showIcon]="true"
               class="w-full"
             />
