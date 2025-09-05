@@ -1,0 +1,8 @@
+     :host {
+       display: block;
+     }
+
+     /* Overlays anexados ao body (datepicker) acima de dialogs/drawers */
+     .dp-on-drawer.p-datepicker {
+       z-index: 1300 !important;
+     }

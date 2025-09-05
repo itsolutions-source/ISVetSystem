@@ -1,0 +1,434 @@
+<div class="space-y-4 mt-2">
+  <!-- Header / Ações -->
+  <p-card>
+    <div
+      class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3"
+    >
+      <div>
+        {{ title || (readonly ? "Tutor" : "Novo Tutor") }}
+        @if(!readonly){
+        <div class="opacity-70 text-sm">
+          Registre um responsável e vincule seus animais.
+        </div>
+        }
+      </div>
+      @if(!readonly){
+      <div class="flex gap-2">
+        <button
+          pButton
+          label="Cancelar"
+          class="p-button-secondary"
+          (click)="onCancel()"
+        ></button>
+        <button
+          pButton
+          label="Salvar"
+          icon="pi pi-check"
+          [disabled]="!isTutorValid()"
+          (click)="onSave()"
+        ></button>
+      </div>
+      }
+    </div>
+  </p-card>
+
+  <!-- Form principal em um único card -->
+  <p-card>
+    <!-- Dados do Tutor -->
+    <h3 class="text-lg font-semibold mb-2">Dados do Tutor</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <p-floatlabel variant="on" class="md:col-span-2">
+        <input
+          pInputText
+          id="t_name"
+          name="t_name"
+          [(ngModel)]="tutor.name"
+          required
+          minlength="3"
+          class="w-full"
+          [disabled]="readonly"
+        />
+        <label for="t_name">Nome completo</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <p-inputmask
+          id="t_cpf"
+          name="t_cpf"
+          [(ngModel)]="tutor.cpf"
+          mask="999.999.999-99"
+          class="w-full"
+          [disabled]="readonly"
+        ></p-inputmask>
+        <label for="t_cpf">CPF</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+      <p-floatlabel variant="on">
+        <p-inputmask
+          id="t_phone"
+          name="t_phone"
+          [(ngModel)]="tutor.phone"
+          mask="(99) 99999-9999"
+          class="w-full"
+          [disabled]="readonly"
+        ></p-inputmask>
+        <label for="t_phone">Telefone principal</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <p-inputmask
+          id="t_phone2"
+          name="t_phone2"
+          [(ngModel)]="tutor.phoneAlt"
+          mask="(99) 99999-9999"
+          class="w-full"
+          [disabled]="readonly"
+        ></p-inputmask>
+        <label for="t_phone2">Telefone alternativo</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="t_email"
+          name="t_email"
+          [(ngModel)]="tutor.email"
+          class="w-full"
+        />
+        <label for="t_email">Email</label>
+      </p-floatlabel>
+    </div>
+
+    <p-divider />
+
+    <!-- Endereço -->
+    <h3 class="text-lg font-semibold mb-2">Endereço</h3>
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+      <p-floatlabel variant="on" class="md:col-span-2">
+        <p-inputmask
+          id="t_zip"
+          name="t_zip"
+          [(ngModel)]="tutor.zip"
+          mask="99999-999"
+          class="w-full"
+        ></p-inputmask>
+        <label for="t_zip">CEP</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on" class="md:col-span-3">
+        <input
+          pInputText
+          id="t_address"
+          name="t_address"
+          [(ngModel)]="tutor.address"
+          class="w-full"
+        />
+        <label for="t_address">Endereço</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="t_number"
+          name="t_number"
+          [(ngModel)]="tutor.number"
+          class="w-full"
+        />
+        <label for="t_number">Número</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="t_complement"
+          name="t_complement"
+          [(ngModel)]="tutor.complement"
+          class="w-full"
+        />
+        <label for="t_complement">Complemento</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="t_district"
+          name="t_district"
+          [(ngModel)]="tutor.district"
+          class="w-full"
+        />
+        <label for="t_district">Bairro</label>
+      </p-floatlabel>
+
+      <div class="grid grid-cols-2 gap-3">
+        <p-floatlabel variant="on">
+          <input
+            pInputText
+            id="t_city"
+            name="t_city"
+            [(ngModel)]="tutor.city"
+            class="w-full"
+          />
+          <label for="t_city">Cidade</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+          <input
+            pInputText
+            id="t_state"
+            name="t_state"
+            [(ngModel)]="tutor.state"
+            class="w-full"
+            maxlength="2"
+          />
+          <label for="t_state">UF</label>
+        </p-floatlabel>
+      </div>
+    </div>
+
+    <p-divider />
+
+    <!-- Preferências / Observações -->
+    <h3 class="text-lg font-semibold mb-2">Observações</h3>
+    <p-floatlabel variant="on">
+      <textarea
+        pTextarea
+        id="t_notes"
+        name="t_notes"
+        [(ngModel)]="tutor.notes"
+        rows="3"
+        class="w-full"
+      ></textarea>
+      <label for="t_notes">Observações (alergias, preferências, etc.)</label>
+    </p-floatlabel>
+
+    <div class="flex items-center gap-2 mt-3">
+      <p-toggleswitch
+        name="t_marketing"
+        [(ngModel)]="tutor.marketingOptIn"
+      ></p-toggleswitch>
+      <span>Autoriza comunicações (promoções, lembretes de vacina etc.)</span>
+    </div>
+
+    <p-divider />
+
+    <!-- Animais do Tutor -->
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h3 class="text-lg font-semibold m-0">Animais do Tutor</h3>
+      <div class="flex gap-2">
+        <button
+          pButton
+          label="Adicionar animal"
+          icon="pi pi-plus"
+          (click)="openAnimalDialog()"
+        ></button>
+      </div>
+    </div>
+
+    <p-table
+      [value]="tutor.animals"
+      [rowHover]="true"
+      [tableStyle]="{ 'min-width': '56rem' }"
+      class="mt-3"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 26%">Nome</th>
+          <th style="width: 14%">Espécie</th>
+          <th style="width: 14%">Sexo</th>
+          <th style="width: 14%">Nascimento</th>
+          <th style="width: 14%">Peso (kg)</th>
+          <th style="width: 18%"></th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-a let-i="rowIndex">
+        <tr>
+          <td class="font-medium">{{ a.name || "—" }}</td>
+          <td>{{ a.species || "—" }}</td>
+          <td>{{ a.sex || "—" }}</td>
+          <td>
+            {{ a.birthDate ? (a.birthDate | date : "dd/MM/yyyy") : "—" }}
+          </td>
+          <td>{{ a.weightKg ?? "—" }}</td>
+          <td class="text-right">
+            <button
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-text"
+              (click)="editAnimal(i)"
+              pTooltip="Editar"
+            ></button>
+            <button
+              pButton
+              icon="pi pi-trash"
+              class="p-button-danger p-button-text"
+              (click)="removeAnimal(i)"
+              pTooltip="Remover"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="6" class="text-center py-6">
+            Nenhum animal vinculado ainda.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
+
+<!-- Dialogo de Animal -->
+<p-dialog
+  [(visible)]="animalDialogVisible"
+  [modal]="true"
+  [style]="{ width: '42rem', maxWidth: '95vw' }"
+  [breakpoints]="{ '1199px': '70vw', '768px': '90vw', '575px': '95vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  [closeOnEscape]="true"
+  header="{{ editingAnimalIndex === -1 ? 'Novo Animal' : 'Editar Animal' }}"
+>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <p-floatlabel variant="on" class="md:col-span-2">
+      <input
+        pInputText
+        id="a_name"
+        name="a_name"
+        [(ngModel)]="animalForm.name"
+        class="w-full"
+        required
+      />
+      <label for="a_name">Nome*</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <p-select
+        id="a_species"
+        name="a_species"
+        [options]="speciesOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="animalForm.species"
+        class="w-full"
+      ></p-select>
+      <label for="a_species">Espécie</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <p-select
+        id="a_sex"
+        name="a_sex"
+        [options]="sexOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="animalForm.sex"
+        class="w-full"
+      ></p-select>
+      <label for="a_sex">Sexo</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <input
+        pInputText
+        id="a_breed"
+        name="a_breed"
+        [(ngModel)]="animalForm.breed"
+        class="w-full"
+      />
+      <label for="a_breed">Raça</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <input
+        pInputText
+        id="a_color"
+        name="a_color"
+        [(ngModel)]="animalForm.color"
+        class="w-full"
+      />
+      <label for="a_color">Cor</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <p-datepicker
+        id="a_birth"
+        name="a_birth"
+        [(ngModel)]="animalForm.birthDate"
+        dateFormat="dd/mm/yy"
+        showIcon="true"
+        [appendTo]="'body'"
+        panelStyleClass="dp-on-drawer"
+        class="w-full"
+      ></p-datepicker>
+      <label for="a_birth">Nascimento</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <input
+        pInputText
+        id="a_weight"
+        name="a_weight"
+        [(ngModel)]="animalForm.weightKg"
+        class="w-full"
+        inputmode="decimal"
+      />
+      <label for="a_weight">Peso (kg)</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on" class="md:col-span-2">
+      <input
+        pInputText
+        id="a_chip"
+        name="a_chip"
+        [(ngModel)]="animalForm.microchip"
+        class="w-full"
+      />
+      <label for="a_chip">Microchip</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on" class="md:col-span-2">
+      <textarea
+        pTextarea
+        id="a_notes"
+        name="a_notes"
+        [(ngModel)]="animalForm.notes"
+        rows="3"
+        class="w-full"
+      ></textarea>
+      <label for="a_notes">Observações</label>
+    </p-floatlabel>
+
+    <div class="flex items-center gap-2 mt-2 md:col-span-2">
+      <p-toggleswitch
+        name="a_active"
+        [(ngModel)]="animalForm.active"
+      ></p-toggleswitch>
+      <span>Ativo</span>
+    </div>
+  </div>
+
+  <ng-template #footer>
+    <div class="flex justify-end gap-2">
+      <button
+        pButton
+        label="Cancelar"
+        class="p-button-secondary"
+        (click)="animalDialogVisible = false"
+      ></button>
+      <button
+        pButton
+        label="Salvar"
+        icon="pi pi-check"
+        [disabled]="!isAnimalValid()"
+        (click)="saveAnimal()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
